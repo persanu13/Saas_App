@@ -1,0 +1,31 @@
+# ===== ENV FILES =====
+.env
+.env.local
+.env.*.local
+
+# nu ignora exemplele
+!.env.example
+
+# ===== NODE MODULES =====
+node_modules/
+**/node_modules/
+
+# ===== BUILD OUTPUTS =====
+**/dist/
+**/.next/
+**/build/
+
+# ===== LOGS =====
+*.log
+**/logs/
+
+# ===== OS =====
+.DS_Store
+Thumbs.db
+
+# ===== IDE =====
+.vscode/
+.idea/
+
+# ===== DOCKER =====
+**/pgdata/
