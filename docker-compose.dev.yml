@@ -12,5 +12,12 @@ services:
     volumes:
       - postgres_data:/var/lib/postgresql/data
 
+  mailcatcher:
+    restart: on-failure
+    image: haravich/fake-smtp-server
+    ports:
+      - "1080:1080"
+      - "1025:1025"
+
 volumes:
   postgres_data:
