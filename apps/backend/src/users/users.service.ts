@@ -31,6 +31,13 @@ export class UsersService {
     });
   }
 
+  async updatePassword(userId: number, newPasswordHash: string) {
+    return await this.prisma.user.update({
+      where: { id: userId },
+      data: { hashPassword: newPasswordHash },
+    });
+  }
+
   findAll() {
     return `This action returns all users`;
   }
@@ -42,6 +49,7 @@ export class UsersService {
         id: true,
         name: true,
         email: true,
+        hashPassword: true,
         emailVerified: true,
         image: true,
         role: true,

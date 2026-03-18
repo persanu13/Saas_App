@@ -10,7 +10,7 @@ export class VerificationTokenService {
       data: {
         identifier: email,
         token,
-        expires: new Date(Date.now() + 15 * 60 * 1000), // 15 minute
+        expires: new Date(Date.now() + 15 * 60 * 1000),
       },
     });
   }

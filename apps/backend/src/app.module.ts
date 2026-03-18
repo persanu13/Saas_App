@@ -5,6 +5,8 @@ import { PrismaModule } from './prisma/prisma.module';
 import { UsersModule } from './users/users.module';
 import { AuthModule } from './auth/auth.module';
 import { MailModule } from './mail/mail.module';
+import { SesionService } from './auth/sesion/sesion.service';
+import { PasswordResetTokenService } from './auth/password-reset-token/password-reset-token.service';
 
 @Module({
   imports: [
@@ -17,5 +19,6 @@ import { MailModule } from './mail/mail.module';
     AuthModule,
     MailModule,
   ],
+  providers: [PasswordResetTokenService],
 })
 export class AppModule {}

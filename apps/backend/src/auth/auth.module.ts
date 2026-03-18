@@ -10,6 +10,9 @@ import { JwtStrategy } from './strategys/jwt.strategy';
 import { VerificationTokenService } from './verification-token.service';
 import { PrismaModule } from 'src/prisma/prisma.module';
 import { MailModule } from 'src/mail/mail.module';
+import { SesionService } from './sesion/sesion.service';
+import { JwtRefreshStrategy } from './strategys/jwt-refresh.strategy';
+import { PasswordResetTokenService } from './password-reset-token/password-reset-token.service';
 
 @Module({
   imports: [
@@ -17,25 +20,16 @@ import { MailModule } from 'src/mail/mail.module';
     PassportModule,
     PrismaModule,
     MailModule,
-    JwtModule.registerAsync({
-      imports: [ConfigModule],
-      inject: [ConfigService],
-      useFactory: (config: ConfigService) => ({
-        global: true,
-        secret: config.getOrThrow<string>('JWT_ACCESS_TOKEN_SECRET'),
-        signOptions: {
-          expiresIn: config.getOrThrow<string>(
-            'JWT_ACCESS_TOKEN_EXPIRATION_MS',
-          ) as any,
-        },
-      }),
-    }),
+    JwtModule.register({}),
   ],
   providers: [
     AuthService,
     LocalStrategy,
     JwtStrategy,
+    JwtRefreshStrategy,
     VerificationTokenService,
+    SesionService,
+    PasswordResetTokenService,
   ],
   controllers: [AuthController],
 })
