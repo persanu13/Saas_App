@@ -7,9 +7,19 @@ import { PrismaService } from 'src/prisma/prisma.service';
 export class UsersService {
   constructor(private prisma: PrismaService) {}
 
-  async create(createUserDto: CreateUserDto) {
+  async create(
+    email: string,
+    name: string,
+    hashPassword?: string,
+    image?: string,
+  ) {
     return await this.prisma.user.create({
-      data: createUserDto,
+      data: {
+        email,
+        name,
+        hashPassword,
+        image,
+      },
       select: {
         id: true,
         name: true,

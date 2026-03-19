@@ -15,21 +15,26 @@ import { VerificationTokenService } from './verification-token.service';
 import { MailService } from 'src/mail/mail.service';
 import { ConfigService } from '@nestjs/config';
 import { Role, Session } from 'generated/prisma/client';
-import { SesionService } from './sesion/sesion.service';
+import { SessionService } from './session/session.service';
 import { JwtPayload } from './interfaces/payload';
 import * as crypto from 'crypto';
 import { PasswordResetTokenService } from './password-reset-token/password-reset-token.service';
+import { AccountService } from './account/account.service';
 
 @Injectable()
 export class AuthService {
+  validateOAuthLogin(profile: any) {
+    throw new Error('Method not implemented.');
+  }
   constructor(
     private usersService: UsersService,
     private jwtService: JwtService,
     private verificationTokenService: VerificationTokenService,
     private mailService: MailService,
     private configService: ConfigService,
-    private sesionService: SesionService,
+    private sesionService: SessionService,
     private passwordResetTokenService: PasswordResetTokenService,
+    private accountService: AccountService,
   ) {}
 
   async validateUser(email: string, password: string): Promise<any> {
@@ -52,11 +57,7 @@ export class AuthService {
     if (!isMatch) {
       throw new UnauthorizedException('Invalid credentials');
     }
-    return {
-      sub: user.id,
-      email: user.email,
-      role: user.role,
-    };
+    return user;
   }
 
   async createTokens(userId: number, email: string, role: Role) {
@@ -106,8 +107,16 @@ export class AuthService {
     };
   }
 
-  async verifyRefreshToken(refreshToken: string, payload: JwtPayload) {
-    const sessions = await this.sesionService.findUserSesions(payload.sub);
+  async logout(refreshToken: string) {
+    const tokenHash = crypto
+      .createHash('sha256')
+      .update(refreshToken)
+      .digest('hex');
+    this.sesionService.deactivateSession(tokenHash);
+  }
+
+  async verificationSession(refreshToken: string, payload: JwtPayload) {
+    const sessions = await this.sesionService.findUserSessions(payload.sub);
 
     let validSession: Session | null = null;
     for (const session of sessions) {
@@ -158,6 +167,7 @@ export class AuthService {
             'Account already exists. I have resent your verification email.',
         };
       }
+
       throw new ConflictException('The email is already in use.');
     }
 
@@ -165,11 +175,11 @@ export class AuthService {
     const hashPassword = await bcrypt.hash(registerDto.password, 10);
 
     // Create user
-    const user = await this.usersService.create({
-      name: registerDto.name,
-      email: registerDto.email,
+    const user = await this.usersService.create(
+      registerDto.email,
+      registerDto.name,
       hashPassword,
-    });
+    );
 
     // Send verification email
     this.sendVerificationEmail(registerDto.email, registerDto.name);
@@ -251,5 +261,53 @@ export class AuthService {
     await this.passwordResetTokenService.deactivateMany(record.userId);
 
     return { message: 'Password reseted succesful!' };
+  }
+
+  async validateGoogleUser(googleUser: {
+    provider: string;
+    providerAccountId: any;
+    email: any;
+    name: any;
+    picture: any;
+    accessToken: string;
+    refreshToken: string;
+  }) {
+    const existingAccount = await this.accountService.findOneByProvider(
+      googleUser.provider,
+      googleUser.providerAccountId,
+    );
+
+    if (existingAccount) {
+      return existingAccount.user;
+    }
+
+    const existingUser = await this.usersService.findByEmail(googleUser.email);
+
+    if (existingUser) {
+      await this.accountService.create(
+        googleUser.provider,
+        googleUser.providerAccountId,
+        googleUser.accessToken,
+        googleUser.refreshToken,
+        existingUser.id,
+      );
+      return existingUser;
+    }
+
+    const newUser = await this.usersService.create(
+      googleUser.email,
+      googleUser.name,
+      googleUser.picture,
+    );
+
+    await this.accountService.create(
+      googleUser.provider,
+      googleUser.providerAccountId,
+      googleUser.accessToken,
+      googleUser.refreshToken,
+      newUser.id,
+    );
+
+    return newUser;
   }
 }

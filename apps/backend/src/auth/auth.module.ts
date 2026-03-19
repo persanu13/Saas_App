@@ -10,9 +10,13 @@ import { JwtStrategy } from './strategys/jwt.strategy';
 import { VerificationTokenService } from './verification-token.service';
 import { PrismaModule } from 'src/prisma/prisma.module';
 import { MailModule } from 'src/mail/mail.module';
-import { SesionService } from './sesion/sesion.service';
+import { SessionService } from './session/session.service';
 import { JwtRefreshStrategy } from './strategys/jwt-refresh.strategy';
 import { PasswordResetTokenService } from './password-reset-token/password-reset-token.service';
+import { APP_GUARD } from '@nestjs/core';
+import { JwtAuthGuard } from './guards/jwt-auth.guard';
+import { GoogleStrategy } from './strategys/google.strategy';
+import { AccountService } from './account/account.service';
 
 @Module({
   imports: [
@@ -27,9 +31,15 @@ import { PasswordResetTokenService } from './password-reset-token/password-reset
     LocalStrategy,
     JwtStrategy,
     JwtRefreshStrategy,
+    GoogleStrategy,
     VerificationTokenService,
-    SesionService,
+    SessionService,
     PasswordResetTokenService,
+    AccountService,
+    {
+      provide: APP_GUARD,
+      useClass: JwtAuthGuard,
+    },
   ],
   controllers: [AuthController],
 })

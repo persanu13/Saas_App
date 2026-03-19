@@ -2,20 +2,20 @@ import { Injectable } from '@nestjs/common';
 import { PrismaService } from 'src/prisma/prisma.service';
 
 @Injectable()
-export class SesionService {
+export class SessionService {
   constructor(private prisma: PrismaService) {}
 
-  async create(sesionToken: string, userId: number, expires: number) {
+  async create(sessionToken: string, userId: number, expires: number) {
     return await this.prisma.session.create({
       data: {
-        sessionToken: sesionToken,
+        sessionToken: sessionToken,
         userId: userId,
         expires: new Date(Date.now() + expires),
       },
     });
   }
 
-  async findUserSesions(userId: number) {
+  async findUserSessions(userId: number) {
     return await this.prisma.session.findMany({
       where: {
         userId: userId,
@@ -25,9 +25,9 @@ export class SesionService {
     });
   }
 
-  async deactivateSession(sesionToken: string) {
-    return await this.prisma.session.update({
-      where: { sessionToken: sesionToken },
+  async deactivateSession(sessionToken: string) {
+    return await this.prisma.session.updateMany({
+      where: { sessionToken },
       data: { isActive: false },
     });
   }
