@@ -9,33 +9,46 @@ import {
 } from '@nestjs/common';
 import { UsersService } from 'src/users/users.service';
 import { JwtService } from '@nestjs/jwt';
-import { RegisterDto } from './dto/register.dto';
 import * as bcrypt from 'bcrypt';
-import { VerificationTokenService } from './verification-token.service';
-import { MailService } from 'src/mail/mail.service';
+
 import { ConfigService } from '@nestjs/config';
 import { Role, Session } from 'generated/prisma/client';
 import { SessionService } from './session/session.service';
 import { JwtPayload } from './interfaces/payload';
 import * as crypto from 'crypto';
-import { PasswordResetTokenService } from './password-reset-token/password-reset-token.service';
 import { AccountService } from './account/account.service';
+import { EmailNotVerifiedException } from './exceptions/unverified-email.exception';
 
 @Injectable()
 export class AuthService {
-  validateOAuthLogin(profile: any) {
-    throw new Error('Method not implemented.');
-  }
   constructor(
     private usersService: UsersService,
     private jwtService: JwtService,
-    private verificationTokenService: VerificationTokenService,
-    private mailService: MailService,
     private configService: ConfigService,
     private sesionService: SessionService,
-    private passwordResetTokenService: PasswordResetTokenService,
     private accountService: AccountService,
   ) {}
+
+  async login(user: JwtPayload) {
+    const { accessToken, refreshToken } = await this.createTokens(
+      user.sub,
+      user.email,
+      user.role,
+    );
+
+    return {
+      accessToken,
+      refreshToken,
+    };
+  }
+
+  async logout(refreshToken: string) {
+    const tokenHash = crypto
+      .createHash('sha256')
+      .update(refreshToken)
+      .digest('hex');
+    this.sesionService.deactivateSession(tokenHash);
+  }
 
   async validateUser(email: string, password: string): Promise<any> {
     const user = await this.usersService.findByEmail(email);
@@ -43,9 +56,7 @@ export class AuthService {
     if (!user) {
       throw new UnauthorizedException('Invalid credentials');
     }
-    if (!user.isActive) {
-      throw new ForbiddenException('Your account has been deactivated.');
-    }
+
     if (!user.hashPassword) {
       throw new BadRequestException(
         'This account use OAuth. Connect with Google/GitHub.',
@@ -53,10 +64,20 @@ export class AuthService {
     }
 
     const isMatch = await bcrypt.compareSync(password, user.hashPassword);
-
     if (!isMatch) {
       throw new UnauthorizedException('Invalid credentials');
     }
+
+    if (!user.emailVerified) {
+      throw new EmailNotVerifiedException();
+    }
+
+    if (!user.isActive) {
+      throw new ForbiddenException(
+        'Your account has been deactivated. Contact support.',
+      );
+    }
+
     return user;
   }
 
@@ -94,25 +115,16 @@ export class AuthService {
     };
   }
 
-  async login(user: JwtPayload) {
+  async rotateTokens(sessionToken: string, user: JwtPayload) {
+    await this.sesionService.deactivateSession(sessionToken);
+
     const { accessToken, refreshToken } = await this.createTokens(
       user.sub,
       user.email,
       user.role,
     );
 
-    return {
-      accessToken,
-      refreshToken,
-    };
-  }
-
-  async logout(refreshToken: string) {
-    const tokenHash = crypto
-      .createHash('sha256')
-      .update(refreshToken)
-      .digest('hex');
-    this.sesionService.deactivateSession(tokenHash);
+    return { accessToken, refreshToken };
   }
 
   async verificationSession(refreshToken: string, payload: JwtPayload) {
@@ -136,131 +148,6 @@ export class AuthService {
     }
 
     return validSession;
-  }
-
-  async rotateTokens(sessionToken: string, user: JwtPayload) {
-    await this.sesionService.deactivateSession(sessionToken);
-
-    const { accessToken, refreshToken } = await this.createTokens(
-      user.sub,
-      user.email,
-      user.role,
-    );
-
-    return { accessToken, refreshToken };
-  }
-
-  async register(registerDto: RegisterDto) {
-    // Verification if email is already used
-    const existingUser = await this.usersService.findByEmail(registerDto.email);
-
-    if (existingUser) {
-      if (!existingUser.isActive) {
-        throw new ForbiddenException(
-          'This account has been disabled. Contact support.',
-        );
-      }
-      if (!existingUser.emailVerified) {
-        await this.sendVerificationEmail(existingUser.email, registerDto.name);
-        return {
-          message:
-            'Account already exists. I have resent your verification email.',
-        };
-      }
-
-      throw new ConflictException('The email is already in use.');
-    }
-
-    // Hash the password
-    const hashPassword = await bcrypt.hash(registerDto.password, 10);
-
-    // Create user
-    const user = await this.usersService.create(
-      registerDto.email,
-      registerDto.name,
-      hashPassword,
-    );
-
-    // Send verification email
-    this.sendVerificationEmail(registerDto.email, registerDto.name);
-
-    return user;
-  }
-
-  async sendVerificationEmail(email: string, name: string) {
-    const token = crypto.randomBytes(32).toString('hex');
-    await this.verificationTokenService.deleteAllByEmail(email);
-    await this.verificationTokenService.create(email, token);
-
-    const verificationLink = `${this.configService.get('APP_URL')}/auth/verify-email?token=${token}&email=${email}`;
-
-    await this.mailService.sendEmail({
-      to: email,
-      subject: 'Welcome to the realm of NestJS',
-      template: 'signup-confirmation-email',
-      context: {
-        name,
-        verificationLink,
-      },
-    });
-  }
-
-  async verifyEmail(email: string, token: string) {
-    const existed = await this.verificationTokenService.findOne(email, token);
-    if (!existed) {
-      throw new NotFoundException('Invalid token.');
-    }
-    if (existed.expires < new Date()) {
-      await this.verificationTokenService.delete(email, token);
-      throw new GoneException('Expiret Token.');
-    }
-    await this.verificationTokenService.deleteAllByEmail(email);
-    return this.usersService.updateEmailVerification(email);
-  }
-
-  async forgotPassword(email: string) {
-    const existed = await this.usersService.findByEmail(email);
-    if (!existed) {
-      return {
-        message:
-          'If this email exists in the system, you will receive a reset link.',
-      };
-    }
-    const token = crypto.randomBytes(32).toString('hex');
-
-    await this.passwordResetTokenService.deactivateMany(existed.id);
-    await this.passwordResetTokenService.create(token, existed.id);
-
-    const resetLink = `${this.configService.get('FRONTEND_URL')}/auth/reset-password?token=${token}`;
-
-    await this.mailService.sendEmail({
-      to: email,
-      subject: 'Reset your password',
-      template: 'reset-password',
-      context: {
-        name: existed.name,
-        resetLink,
-      },
-    });
-    return {
-      message:
-        'If this email exists in the system, you will receive a reset link.',
-    };
-  }
-
-  async resetPassword(token: string, newPassword: string) {
-    const record = await this.passwordResetTokenService.findOne(token);
-
-    if (!record || record.expiresAt < new Date() || record.used) {
-      throw new BadRequestException('Invalid token');
-    }
-
-    const newPasswordHash = await bcrypt.hash(newPassword, 10);
-    await this.usersService.updatePassword(record.userId, newPasswordHash);
-
-    await this.passwordResetTokenService.deactivateMany(record.userId);
-
-    return { message: 'Password reseted succesful!' };
   }
 
   async validateGoogleUser(googleUser: {

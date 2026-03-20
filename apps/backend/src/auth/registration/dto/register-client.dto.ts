@@ -8,7 +8,7 @@ import {
 } from 'class-validator';
 import { Transform } from 'class-transformer';
 
-export class RegisterDto {
+export class RegisterClientDto {
   @IsString()
   @IsNotEmpty()
   @MinLength(2)
