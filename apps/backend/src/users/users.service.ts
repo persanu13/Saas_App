@@ -2,6 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { PrismaService } from 'src/prisma/prisma.service';
+import { UserType } from 'generated/prisma/enums';
 
 @Injectable()
 export class UsersService {
@@ -10,6 +11,7 @@ export class UsersService {
   async create(
     email: string,
     name: string,
+    type: UserType,
     hashPassword?: string,
     image?: string,
   ) {
@@ -17,6 +19,7 @@ export class UsersService {
       data: {
         email,
         name,
+        type,
         hashPassword,
         image,
       },
@@ -26,7 +29,7 @@ export class UsersService {
         email: true,
         emailVerified: true,
         image: true,
-        role: true,
+        type: true,
         isActive: true,
         createdAt: true,
         updatedAt: true,
@@ -34,9 +37,27 @@ export class UsersService {
     });
   }
 
-  async updateEmailVerification(email: string) {
+  async findByEmail(email: string, type: UserType) {
+    return await this.prisma.user.findUnique({
+      where: { email_type: { email, type } },
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        hashPassword: true,
+        emailVerified: true,
+        image: true,
+        type: true,
+        isActive: true,
+        createdAt: true,
+        updatedAt: true,
+      },
+    });
+  }
+
+  async updateEmailVerification(id: number) {
     return await this.prisma.user.update({
-      where: { email },
+      where: { id },
       data: { emailVerified: new Date() },
     });
   }
@@ -50,24 +71,6 @@ export class UsersService {
 
   findAll() {
     return `This action returns all users`;
-  }
-
-  async findByEmail(email: string) {
-    return await this.prisma.user.findUnique({
-      where: { email },
-      select: {
-        id: true,
-        name: true,
-        email: true,
-        hashPassword: true,
-        emailVerified: true,
-        image: true,
-        role: true,
-        isActive: true,
-        createdAt: true,
-        updatedAt: true,
-      },
-    });
   }
 
   findOne(id: number) {

@@ -12,12 +12,13 @@ import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcrypt';
 
 import { ConfigService } from '@nestjs/config';
-import { Role, Session } from 'generated/prisma/client';
+import { Session, UserType } from 'generated/prisma/client';
 import { SessionService } from './session/session.service';
 import { JwtPayload } from './interfaces/payload';
 import * as crypto from 'crypto';
 import { AccountService } from './account/account.service';
 import { EmailNotVerifiedException } from './exceptions/unverified-email.exception';
+import { AccountDeactivatedException } from './exceptions/account_deactivated.exception';
 
 @Injectable()
 export class AuthService {
@@ -29,11 +30,31 @@ export class AuthService {
     private accountService: AccountService,
   ) {}
 
+  async email(email: string, type: UserType) {
+    const user = await this.usersService.findByEmail(email, type);
+
+    if (!user) {
+      return { exists: false, action: 'register' };
+    }
+
+    if (!user.isActive) {
+      throw new AccountDeactivatedException();
+    }
+
+    if (!user.hashPassword) {
+      return {
+        exists: true,
+        action: 'social-login',
+        accounts: await this.accountService.findMany(user.id),
+      };
+    }
+    return { exists: true, action: 'login' };
+  }
+
   async login(user: JwtPayload) {
     const { accessToken, refreshToken } = await this.createTokens(
       user.sub,
       user.email,
-      user.role,
     );
 
     return {
@@ -51,38 +72,32 @@ export class AuthService {
   }
 
   async validateUser(email: string, password: string): Promise<any> {
-    const user = await this.usersService.findByEmail(email);
-
-    if (!user) {
-      throw new UnauthorizedException('Invalid credentials');
-    }
-
-    if (!user.hashPassword) {
-      throw new BadRequestException(
-        'This account use OAuth. Connect with Google/GitHub.',
-      );
-    }
-
-    const isMatch = await bcrypt.compareSync(password, user.hashPassword);
-    if (!isMatch) {
-      throw new UnauthorizedException('Invalid credentials');
-    }
-
-    if (!user.emailVerified) {
-      throw new EmailNotVerifiedException();
-    }
-
-    if (!user.isActive) {
-      throw new ForbiddenException(
-        'Your account has been deactivated. Contact support.',
-      );
-    }
-
-    return user;
+    // const user = await this.usersService.findByEmail(email);
+    // if (!user) {
+    //   throw new UnauthorizedException('Invalid credentials');
+    // }
+    // if (!user.hashPassword) {
+    //   throw new BadRequestException(
+    //     'This account use OAuth. Connect with Google/GitHub.',
+    //   );
+    // }
+    // const isMatch = await bcrypt.compareSync(password, user.hashPassword);
+    // if (!isMatch) {
+    //   throw new UnauthorizedException('Invalid credentials');
+    // }
+    // if (!user.emailVerified) {
+    //   throw new EmailNotVerifiedException();
+    // }
+    // if (!user.isActive) {
+    //   throw new ForbiddenException(
+    //     'Your account has been deactivated. Contact support.',
+    //   );
+    // }
+    // return user;
   }
 
-  async createTokens(userId: number, email: string, role: Role) {
-    const payload: JwtPayload = { sub: userId, email: email, role: role };
+  async createTokens(userId: number, email: string) {
+    const payload: JwtPayload = { sub: userId, email: email };
 
     const accessToken = await this.jwtService.signAsync(payload, {
       secret: this.configService.getOrThrow('JWT_ACCESS_TOKEN_SECRET'),
@@ -121,7 +136,6 @@ export class AuthService {
     const { accessToken, refreshToken } = await this.createTokens(
       user.sub,
       user.email,
-      user.role,
     );
 
     return { accessToken, refreshToken };
@@ -159,42 +173,36 @@ export class AuthService {
     accessToken: string;
     refreshToken: string;
   }) {
-    const existingAccount = await this.accountService.findOneByProvider(
-      googleUser.provider,
-      googleUser.providerAccountId,
-    );
-
-    if (existingAccount) {
-      return existingAccount.user;
-    }
-
-    const existingUser = await this.usersService.findByEmail(googleUser.email);
-
-    if (existingUser) {
-      await this.accountService.create(
-        googleUser.provider,
-        googleUser.providerAccountId,
-        googleUser.accessToken,
-        googleUser.refreshToken,
-        existingUser.id,
-      );
-      return existingUser;
-    }
-
-    const newUser = await this.usersService.create(
-      googleUser.email,
-      googleUser.name,
-      googleUser.picture,
-    );
-
-    await this.accountService.create(
-      googleUser.provider,
-      googleUser.providerAccountId,
-      googleUser.accessToken,
-      googleUser.refreshToken,
-      newUser.id,
-    );
-
-    return newUser;
+    // const existingAccount = await this.accountService.findOneByProvider(
+    //   googleUser.provider,
+    //   googleUser.providerAccountId,
+    // );
+    // if (existingAccount) {
+    //   return existingAccount.user;
+    // }
+    // const existingUser = await this.usersService.findByEmail(googleUser.email);
+    // if (existingUser) {
+    //   await this.accountService.create(
+    //     googleUser.provider,
+    //     googleUser.providerAccountId,
+    //     googleUser.accessToken,
+    //     googleUser.refreshToken,
+    //     existingUser.id,
+    //   );
+    //   return existingUser;
+    // }
+    // const newUser = await this.usersService.create(
+    //   googleUser.email,
+    //   googleUser.name,
+    //   googleUser.picture,
+    // );
+    // await this.accountService.create(
+    //   googleUser.provider,
+    //   googleUser.providerAccountId,
+    //   googleUser.accessToken,
+    //   googleUser.refreshToken,
+    //   newUser.id,
+    // );
+    // return newUser;
   }
 }

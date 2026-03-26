@@ -15,7 +15,7 @@ import { AuthService } from './auth.service';
 import { ConfigService } from '@nestjs/config';
 import { JwtRefreshAuthGuard } from './guards/jwt-refresh-auth.guard';
 import { Public } from './decorators/public.decorator';
-import { GoogleAuthGuard } from './guards/google-auth.guard';
+import { EmailDto } from './dto/email.dto';
 
 @Controller('auth')
 export class AuthController {
@@ -23,6 +23,13 @@ export class AuthController {
     private authService: AuthService,
     private configService: ConfigService,
   ) {}
+
+  @Public()
+  @HttpCode(HttpStatus.OK)
+  @Post('email')
+  async email(@Body() dto: EmailDto) {
+    return this.authService.email(dto.email, dto.type);
+  }
 
   // #region Login
   @Public()

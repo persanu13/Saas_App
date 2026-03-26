@@ -22,41 +22,40 @@ export class RegistrationService {
     private mailService: MailService,
     private configService: ConfigService,
   ) {}
+
   async registerClient(registerDto: RegisterClientDto) {
     // Verification if email is already used
-    const existingUser = await this.usersService.findByEmail(registerDto.email);
+    // const existingUser = await this.usersService.findByEmail(registerDto.email);
+    // if (existingUser) {
+    //   if (!existingUser.isActive) {
+    //     throw new ForbiddenException(
+    //       'This account has been disabled. Contact support.',
+    //     );
+    //   }
+    //   if (!existingUser.emailVerified) {
+    //     await this.sendVerificationEmail(existingUser.email, registerDto.name);
+    //     return {
+    //       message:
+    //         'Account already exists. I have resent your verification email.',
+    //     };
+    //   }
+    //   throw new ConflictException('The email is already in use.');
+    // }
+    // // Hash the password
+    // const hashPassword = await bcrypt.hash(registerDto.password, 10);
+    // // Create user
+    // const user = await this.usersService.create(
+    //   registerDto.email,
+    //   registerDto.name,
+    //   hashPassword,
+    // );
+    // // Send verification email
+    // this.sendVerificationEmail(registerDto.email, registerDto.name);
+    // return user;
+  }
 
-    if (existingUser) {
-      if (!existingUser.isActive) {
-        throw new ForbiddenException(
-          'This account has been disabled. Contact support.',
-        );
-      }
-      if (!existingUser.emailVerified) {
-        await this.sendVerificationEmail(existingUser.email, registerDto.name);
-        return {
-          message:
-            'Account already exists. I have resent your verification email.',
-        };
-      }
-
-      throw new ConflictException('The email is already in use.');
-    }
-
-    // Hash the password
-    const hashPassword = await bcrypt.hash(registerDto.password, 10);
-
-    // Create user
-    const user = await this.usersService.create(
-      registerDto.email,
-      registerDto.name,
-      hashPassword,
-    );
-
-    // Send verification email
-    this.sendVerificationEmail(registerDto.email, registerDto.name);
-
-    return user;
+  async emailClient(email: string) {
+    const existed = this.usersService;
   }
 
   async sendVerificationEmail(email: string, name: string) {
@@ -78,15 +77,15 @@ export class RegistrationService {
   }
 
   async verifyEmail(email: string, token: string) {
-    const existed = await this.verificationTokenService.findOne(email, token);
-    if (!existed) {
-      throw new NotFoundException('Invalid token.');
-    }
-    if (existed.expires < new Date()) {
-      await this.verificationTokenService.delete(email, token);
-      throw new GoneException('Expiret Token.');
-    }
-    await this.verificationTokenService.deleteAllByEmail(email);
-    return this.usersService.updateEmailVerification(email);
+    // const existed = await this.verificationTokenService.findOne(email, token);
+    // if (!existed) {
+    //   throw new NotFoundException('Invalid token.');
+    // }
+    // if (existed.expires < new Date()) {
+    //   await this.verificationTokenService.delete(email, token);
+    //   throw new GoneException('Expiret Token.');
+    // }
+    // await this.verificationTokenService.deleteAllByEmail(email);
+    // return this.usersService.updateEmailVerification(email);
   }
 }

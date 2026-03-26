@@ -38,10 +38,6 @@ import { GoogleController } from './google/google.controller';
     VerificationTokenService,
     SessionService,
     AccountService,
-    {
-      provide: APP_GUARD,
-      useClass: JwtAuthGuard,
-    },
     RegistrationService,
     PasswordService,
   ],

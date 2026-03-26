@@ -35,9 +35,9 @@ export class GoogleStrategy extends PassportStrategy(Strategy, 'google') {
     });
 
     return {
-      sub: user.id,
-      email: user.email,
-      role: user.role,
+      // sub: user.id,
+      // email: user.email,
+      // role: user.role,
     };
   }
 }

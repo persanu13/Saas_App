@@ -13,9 +13,10 @@ datasource db {
   provider = "postgresql"
 }
 
-enum Role {
-  USER
-  SUPER_ADMIN
+enum UserType {
+  APP_ADMIN
+  CUSTOMER
+  PROFESSIONAL
 }
 
 enum OrgRole {
@@ -87,12 +88,12 @@ model PasswordResetToken {
 model User {
   id            Int       @id @default(autoincrement())
   name          String?
-  email         String    @unique
+  email         String
   emailVerified DateTime? @map("email_verified")
   image         String?
 
-  hashPassword String? @map("hash_password")
-  role         Role    @default(USER)
+  hashPassword String?  @map("hash_password")
+  type         UserType
 
   memberships OrganizationMember[]
   accounts    Account[]
@@ -104,6 +105,7 @@ model User {
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
 
+  @@unique([email, type], name: "email_type")
   @@map("users")
 }
 

@@ -8,7 +8,6 @@ import {
   Query,
 } from '@nestjs/common';
 import { RegistrationService } from './registration.service';
-import { ConfigService } from '@nestjs/config';
 import { Public } from '../decorators/public.decorator';
 import { RegisterClientDto } from './dto/register-client.dto';
 
@@ -34,5 +33,12 @@ export class RegistrationController {
     return {
       message: 'Verification succesful!',
     };
+  }
+
+  @Public()
+  @HttpCode(HttpStatus.CREATED)
+  @Post('email-client')
+  async emailClient(@Body() dto: RegisterClientDto) {
+    return await this.registrationService.registerClient(dto);
   }
 }

@@ -17,6 +17,12 @@ export class AccountService {
     });
   }
 
+  async findMany(userId: number) {
+    return this.prisma.account.findMany({
+      where: { userId },
+    });
+  }
+
   async create(
     provider: string,
     providerAccountId: string,

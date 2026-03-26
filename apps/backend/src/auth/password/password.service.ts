@@ -16,42 +16,38 @@ export class PasswordService {
   ) {}
 
   async forgotPassword(email: string) {
-    const existed = await this.usersService.findByEmail(email);
-    if (!existed) {
-      return {
-        message:
-          'If this email exists in the system, you will receive a reset link.',
-      };
-    }
-    const token = crypto.randomBytes(32).toString('hex');
-
-    await this.prisma.passwordResetToken.deleteMany({
-      where: { userId: existed.id },
-    });
-
-    await this.prisma.passwordResetToken.create({
-      data: {
-        token,
-        userId: existed.id,
-        expiresAt: new Date(Date.now() + 15 * 60 * 1000),
-      },
-    });
-
-    const resetLink = `${this.configService.get('FRONTEND_URL')}/auth/reset-password?token=${token}`;
-
-    await this.mailService.sendEmail({
-      to: email,
-      subject: 'Reset your password',
-      template: 'reset-password',
-      context: {
-        name: existed.name,
-        resetLink,
-      },
-    });
-    return {
-      message:
-        'If this email exists in the system, you will receive a reset link.',
-    };
+    // const existed = await this.usersService.findByEmail(email);
+    // if (!existed) {
+    //   return {
+    //     message:
+    //       'If this email exists in the system, you will receive a reset link.',
+    //   };
+    // }
+    // const token = crypto.randomBytes(32).toString('hex');
+    // await this.prisma.passwordResetToken.deleteMany({
+    //   where: { userId: existed.id },
+    // });
+    // await this.prisma.passwordResetToken.create({
+    //   data: {
+    //     token,
+    //     userId: existed.id,
+    //     expiresAt: new Date(Date.now() + 15 * 60 * 1000),
+    //   },
+    // });
+    // const resetLink = `${this.configService.get('FRONTEND_URL')}/auth/reset-password?token=${token}`;
+    // await this.mailService.sendEmail({
+    //   to: email,
+    //   subject: 'Reset your password',
+    //   template: 'reset-password',
+    //   context: {
+    //     name: existed.name,
+    //     resetLink,
+    //   },
+    // });
+    // return {
+    //   message:
+    //     'If this email exists in the system, you will receive a reset link.',
+    // };
   }
 
   async resetPassword(token: string, newPassword: string) {
