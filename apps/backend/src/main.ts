@@ -6,6 +6,7 @@ import { AllExceptionsFilter } from './common/filters/all-exceptions.filter';
 import { LoggingInterceptor } from './common/interceptors/logging.interceptor';
 import { TimeoutInterceptor } from './common/interceptors/timeout.interceptor';
 import { TransformInterceptor } from './common/interceptors/transform.interceptor';
+import { validationPipe } from './common/pipes/validation.pipe';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
@@ -17,13 +18,9 @@ async function bootstrap() {
     ], // Allow only this origin
     credentials: true, // Allow cookies to be sent
   });
-  app.useGlobalPipes(
-    new ValidationPipe({
-      transform: true, // enables class-transformer
-      whitelist: true, // strips properties not in DTO
-      forbidNonWhitelisted: true, // throws error on extra props
-    }),
-  );
+
+  app.useGlobalPipes(validationPipe);
+
   app.use(cookieParser());
 
   app.useGlobalFilters(new AllExceptionsFilter());

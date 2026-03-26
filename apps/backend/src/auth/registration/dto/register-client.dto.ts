@@ -12,7 +12,7 @@ export class RegisterClientDto {
   @IsString()
   @IsNotEmpty()
   @MinLength(2)
-  @MaxLength(50)
+  @MaxLength(100)
   name: string;
 
   @IsEmail()

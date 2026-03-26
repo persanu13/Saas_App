@@ -25,37 +25,37 @@ export class RegistrationService {
 
   async registerClient(registerDto: RegisterClientDto) {
     // Verification if email is already used
-    // const existingUser = await this.usersService.findByEmail(registerDto.email);
-    // if (existingUser) {
-    //   if (!existingUser.isActive) {
-    //     throw new ForbiddenException(
-    //       'This account has been disabled. Contact support.',
-    //     );
-    //   }
-    //   if (!existingUser.emailVerified) {
-    //     await this.sendVerificationEmail(existingUser.email, registerDto.name);
-    //     return {
-    //       message:
-    //         'Account already exists. I have resent your verification email.',
-    //     };
-    //   }
-    //   throw new ConflictException('The email is already in use.');
-    // }
-    // // Hash the password
-    // const hashPassword = await bcrypt.hash(registerDto.password, 10);
-    // // Create user
-    // const user = await this.usersService.create(
-    //   registerDto.email,
-    //   registerDto.name,
-    //   hashPassword,
-    // );
-    // // Send verification email
-    // this.sendVerificationEmail(registerDto.email, registerDto.name);
-    // return user;
-  }
-
-  async emailClient(email: string) {
-    const existed = this.usersService;
+    const existingUser = await this.usersService.findByEmail(
+      registerDto.email,
+      'CUSTOMER',
+    );
+    if (existingUser) {
+      if (!existingUser.isActive) {
+        throw new ForbiddenException(
+          'This account has been disabled. Contact support.',
+        );
+      }
+      if (!existingUser.emailVerified) {
+        await this.sendVerificationEmail(existingUser.email, registerDto.name);
+        return {
+          message:
+            'Account already exists. I have resent your verification email.',
+        };
+      }
+      throw new ConflictException('The email is already in use.');
+    }
+    // Hash the password
+    const hashPassword = await bcrypt.hash(registerDto.password, 10);
+    // Create user
+    const user = await this.usersService.create(
+      registerDto.email,
+      registerDto.name,
+      'CUSTOMER',
+      hashPassword,
+    );
+    // Send verification email
+    this.sendVerificationEmail(registerDto.email, registerDto.name);
+    return user;
   }
 
   async sendVerificationEmail(email: string, name: string) {

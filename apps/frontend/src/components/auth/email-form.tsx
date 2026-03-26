@@ -15,10 +15,15 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { Controller, useForm } from "react-hook-form";
 import { emailSchema } from "@/lib/schemas/login";
 import z from "zod";
-import { toast } from "sonner";
 import { emailAction } from "@/actions/auth/login";
+import { useAuth } from "@/contexts/auth-context";
+import { useRouter } from "next/navigation";
 
 export function EmailForm() {
+  const router = useRouter();
+
+  const { setEmail } = useAuth();
+
   const form = useForm<z.infer<typeof emailSchema>>({
     resolver: zodResolver(emailSchema),
     defaultValues: {
@@ -28,7 +33,12 @@ export function EmailForm() {
   });
 
   async function onSubmit(data: z.infer<typeof emailSchema>) {
-    const result = await emailAction(data);
+    const res = await emailAction(data);
+
+    if (!res.data.exists) {
+      setEmail(form.getValues("email"));
+      router.push("customer/register");
+    }
   }
 
   return (

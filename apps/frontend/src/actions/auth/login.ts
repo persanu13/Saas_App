@@ -1,16 +1,19 @@
 "use server";
-import { api } from "@/lib/axios";
-import { emailSchema } from "@/lib/schemas/login";
-import axios from "axios";
+import { api, ApiResponse } from "@/lib/axios";
+import { emailSchema, registerSchema } from "@/lib/schemas/login";
 import z from "zod";
 
-export async function emailAction(formData: z.infer<typeof emailSchema>) {
-  const email = formData.email;
+type EmailData = {
+  exists: boolean;
+};
 
-  try {
-    const data = await api.post("/auth/email", { email, type: "" });
-    console.log(data);
-  } catch (error: any) {
-    console.log(error.response.data);
-  }
+export async function emailAction(formData: z.infer<typeof emailSchema>) {
+  return (await api.post("/auth/email", {
+    email: formData.email,
+    type: "CUSTOMER",
+  })) as ApiResponse<EmailData>;
 }
+
+export async function registerAction(
+  formData: z.infer<typeof registerSchema>,
+) {}

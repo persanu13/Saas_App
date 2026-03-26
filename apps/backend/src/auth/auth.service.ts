@@ -1,15 +1,10 @@
 import {
-  BadRequestException,
-  ConflictException,
   ForbiddenException,
-  GoneException,
   Injectable,
-  NotFoundException,
   UnauthorizedException,
 } from '@nestjs/common';
 import { UsersService } from 'src/users/users.service';
 import { JwtService } from '@nestjs/jwt';
-import * as bcrypt from 'bcrypt';
 
 import { ConfigService } from '@nestjs/config';
 import { Session, UserType } from 'generated/prisma/client';
@@ -17,8 +12,6 @@ import { SessionService } from './session/session.service';
 import { JwtPayload } from './interfaces/payload';
 import * as crypto from 'crypto';
 import { AccountService } from './account/account.service';
-import { EmailNotVerifiedException } from './exceptions/unverified-email.exception';
-import { AccountDeactivatedException } from './exceptions/account_deactivated.exception';
 
 @Injectable()
 export class AuthService {
@@ -34,21 +27,20 @@ export class AuthService {
     const user = await this.usersService.findByEmail(email, type);
 
     if (!user) {
-      return { exists: false, action: 'register' };
+      return { exists: false };
     }
 
     if (!user.isActive) {
-      throw new AccountDeactivatedException();
+      throw new ForbiddenException('Your account was deactivate!');
     }
 
     if (!user.hashPassword) {
       return {
         exists: true,
-        action: 'social-login',
         accounts: await this.accountService.findMany(user.id),
       };
     }
-    return { exists: true, action: 'login' };
+    return { exists: true };
   }
 
   async login(user: JwtPayload) {
