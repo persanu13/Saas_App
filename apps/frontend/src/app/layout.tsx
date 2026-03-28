@@ -3,6 +3,7 @@ import { JetBrains_Mono } from "next/font/google";
 import "./globals.css";
 import { cn } from "@/lib/utils";
 import { Toaster } from "sonner";
+import { TanStackProvider } from "@/common/providers/tan-stack-provider";
 
 const jetbrainsMono = JetBrains_Mono({
   subsets: ["latin"],
@@ -22,8 +23,8 @@ export default function RootLayout({
   return (
     <html lang="en" className={cn("font-mono", jetbrainsMono.variable)}>
       <body>
-        {children}
-        <Toaster />
+        <TanStackProvider>{children}</TanStackProvider>
+        <Toaster position="top-right" />
       </body>
     </html>
   );

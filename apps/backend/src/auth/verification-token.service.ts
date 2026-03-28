@@ -1,35 +1,37 @@
 import { Injectable } from '@nestjs/common';
+import { VerificationTokenType } from 'generated/prisma/client';
 import { PrismaService } from 'src/prisma/prisma.service';
 
 @Injectable()
 export class VerificationTokenService {
   constructor(private prisma: PrismaService) {}
 
-  async create(email: string, token: string) {
+  async create(userId: number, token: string, type: VerificationTokenType) {
     await this.prisma.verificationToken.create({
       data: {
-        identifier: email,
         token,
-        expires: new Date(Date.now() + 15 * 60 * 1000),
+        userId,
+        type,
+        expiresAt: new Date(Date.now() + 15 * 60 * 1000),
       },
     });
   }
 
-  async findOne(email: string, token: string) {
-    return await this.prisma.verificationToken.findFirst({
-      where: { identifier: email, token: token },
+  async findOne(token: string) {
+    return await this.prisma.verificationToken.findUnique({
+      where: { token },
     });
   }
 
-  async delete(email: string, token: string) {
+  async delete(token: string) {
     await this.prisma.verificationToken.delete({
-      where: { identifier_token: { identifier: email, token } },
+      where: { token },
     });
   }
 
-  async deleteAllByEmail(email: string) {
+  async deleteAllByUserId(userId: number, type: VerificationTokenType) {
     await this.prisma.verificationToken.deleteMany({
-      where: { identifier: email },
+      where: { userId, type },
     });
   }
 }

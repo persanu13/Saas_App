@@ -2,7 +2,6 @@
 
 import {
   Field,
-  FieldDescription,
   FieldError,
   FieldGroup,
   FieldLabel,
@@ -15,9 +14,20 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { Controller, useForm } from "react-hook-form";
 import { emailSchema } from "@/lib/schemas/login";
 import z from "zod";
-import { emailAction } from "@/actions/auth/login";
-import { useAuth } from "@/contexts/auth-context";
+import { useAuth } from "@/common/contexts/auth-context";
 import { useRouter } from "next/navigation";
+import { toast } from "sonner";
+import { AxiosResponse } from "axios";
+
+import {
+  useQuery,
+  useMutation,
+  useQueryClient,
+  QueryClient,
+  QueryClientProvider,
+} from "@tanstack/react-query";
+import { ApiError } from "@/lib/axios";
+import { emailCall } from "@/api/auth/auth";
 
 export function EmailForm() {
   const router = useRouter();
@@ -32,17 +42,25 @@ export function EmailForm() {
     mode: "onBlur",
   });
 
-  async function onSubmit(data: z.infer<typeof emailSchema>) {
-    const res = await emailAction(data);
-
-    if (!res.data.exists) {
-      setEmail(form.getValues("email"));
-      router.push("customer/register");
-    }
-  }
+  const { mutate, isPending } = useMutation({
+    mutationFn: emailCall,
+    onSuccess: (res) => {
+      if (!res.data.exists) {
+        setEmail(form.getValues("email"));
+        router.push("customer/register");
+      }
+    },
+    onError: (err: ApiError) => {
+      if (err.statusCode === 401) {
+        setEmail(form.getValues("email"));
+        router.push("/auth/email-verification");
+      }
+      toast.error(err.details.message);
+    },
+  });
 
   return (
-    <form id="form-email" onSubmit={form.handleSubmit(onSubmit)}>
+    <form id="form-email" onSubmit={form.handleSubmit((data) => mutate(data))}>
       <FieldSet className="w-full">
         <FieldGroup>
           <Controller

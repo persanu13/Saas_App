@@ -36,10 +36,8 @@ export class RegistrationService {
         );
       }
       if (!existingUser.emailVerified) {
-        await this.sendVerificationEmail(existingUser.email, registerDto.name);
         return {
-          message:
-            'Account already exists. I have resent your verification email.',
+          message: 'Account already exists. You need to verified your email.',
         };
       }
       throw new ConflictException('The email is already in use.');
@@ -51,41 +49,52 @@ export class RegistrationService {
       registerDto.email,
       registerDto.name,
       'CUSTOMER',
+      registerDto.phone,
       hashPassword,
     );
     // Send verification email
-    this.sendVerificationEmail(registerDto.email, registerDto.name);
+    this.sendVerificationEmail(registerDto.email);
     return user;
   }
 
-  async sendVerificationEmail(email: string, name: string) {
-    const token = crypto.randomBytes(32).toString('hex');
-    await this.verificationTokenService.deleteAllByEmail(email);
-    await this.verificationTokenService.create(email, token);
+  async sendVerificationEmail(email: string) {
+    const user = await this.usersService.findByEmail(email, 'CUSTOMER');
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
 
-    const verificationLink = `${this.configService.get('APP_URL')}/auth/verify-email?token=${token}&email=${email}`;
+    const token = crypto.randomBytes(32).toString('hex');
+
+    await this.verificationTokenService.deleteAllByUserId(user.id, 'EMAIL');
+
+    await this.verificationTokenService.create(user.id, token, 'EMAIL');
+
+    const verificationLink = `${this.configService.get('FRONTEND_URL')}/auth/email-verification?token=${token}&email=${encodeURIComponent(email)}`;
 
     await this.mailService.sendEmail({
       to: email,
-      subject: 'Welcome to the realm of NestJS',
+      subject: 'Welcome to Trimly',
       template: 'signup-confirmation-email',
       context: {
-        name,
+        name: user.name,
         verificationLink,
       },
     });
   }
 
-  async verifyEmail(email: string, token: string) {
-    // const existed = await this.verificationTokenService.findOne(email, token);
-    // if (!existed) {
-    //   throw new NotFoundException('Invalid token.');
-    // }
-    // if (existed.expires < new Date()) {
-    //   await this.verificationTokenService.delete(email, token);
-    //   throw new GoneException('Expiret Token.');
-    // }
-    // await this.verificationTokenService.deleteAllByEmail(email);
-    // return this.usersService.updateEmailVerification(email);
+  async verifyEmailToken(token: string) {
+    const existed = await this.verificationTokenService.findOne(token);
+    if (!existed) {
+      throw new NotFoundException('Invalid token.');
+    }
+    if (existed.expiresAt < new Date()) {
+      await this.verificationTokenService.delete(token);
+      throw new GoneException('Expiret Token.');
+    }
+    await this.verificationTokenService.deleteAllByUserId(
+      existed.userId,
+      'EMAIL',
+    );
+    return this.usersService.updateEmailVerification(existed.userId);
   }
 }

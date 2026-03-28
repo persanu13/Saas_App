@@ -1,16 +1,18 @@
 import { LinkCard } from "@/components/my-ui/link-card";
-import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import { ArrowRight02Icon } from "@hugeicons/core-free-icons";
-import { HugeiconsIcon } from "@hugeicons/react";
-import Link from "next/link";
 import { Fragment } from "react/jsx-runtime";
+
+const LINKS = [
+  {
+    title: "Trimly for customers",
+    description: "Book salons and spas near you",
+    href: "/auth/customer",
+  },
+  {
+    title: "Trimly for professionals",
+    description: "Manage and grow your business",
+    href: "/auth/professional",
+  },
+];
 
 export default function AuthPage() {
   return (
@@ -19,16 +21,16 @@ export default function AuthPage() {
         Sign up/log in
       </h1>
       <div className="flex flex-col gap-4 w-full">
-        <LinkCard
-          href="/auth/client"
-          title="Trimly for customers"
-          description="Book salons and spas near you"
-        ></LinkCard>
-        <LinkCard
-          href="/pagina-ta"
-          title="Trimly for professionals"
-          description="Manage and grow your business"
-        ></LinkCard>
+        {LINKS.map((link) => {
+          return (
+            <LinkCard
+              key={link.href}
+              href={link.href}
+              title={link.title}
+              description={link.description}
+            ></LinkCard>
+          );
+        })}
       </div>
     </Fragment>
   );

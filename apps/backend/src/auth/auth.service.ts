@@ -34,6 +34,12 @@ export class AuthService {
       throw new ForbiddenException('Your account was deactivate!');
     }
 
+    if (!user.emailVerified) {
+      throw new UnauthorizedException(
+        'Your email is not verified! Please verified your email.',
+      );
+    }
+
     if (!user.hashPassword) {
       return {
         exists: true,

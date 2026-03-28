@@ -13,10 +13,9 @@ import { Button } from "../ui/button";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Controller, useForm } from "react-hook-form";
 import z from "zod";
-import { useAuth } from "@/contexts/auth-context";
+import { useAuth } from "@/common/contexts/auth-context";
 import { useRouter } from "next/navigation";
 import { registerSchema } from "@/lib/schemas/login";
-import { registerAction } from "@/actions/auth/login";
 import { Checkbox } from "../ui/checkbox";
 import {
   Select,
@@ -27,6 +26,11 @@ import {
   SelectValue,
 } from "../ui/select";
 import { getCountries, getCountryCallingCode } from "libphonenumber-js";
+import { useMutation } from "@tanstack/react-query";
+
+import { toast } from "sonner";
+import { ApiError } from "@/lib/axios";
+import { registerCall } from "@/api/auth/register";
 
 const PHONE_PREFIXES = getCountries().map((country) => ({
   country,
@@ -43,7 +47,8 @@ export function RegisterForm() {
       email: email ?? "",
       firstName: "",
       lastName: "",
-      phone: "",
+      phonePrefix: "",
+      phoneNumber: "",
       password: "",
       confirmPassword: "",
       acceptEmails: false,
@@ -51,13 +56,21 @@ export function RegisterForm() {
     mode: "onChange",
   });
 
-  async function onSubmit(data: z.infer<typeof registerSchema>) {
-    const res = await registerAction(data);
-    // handle res
-  }
+  const { mutate, isPending } = useMutation({
+    mutationFn: registerCall,
+    onSuccess: (res) => {
+      router.push("email-verification");
+    },
+    onError: (err: ApiError) => {
+      toast.error(err.details.message);
+    },
+  });
 
   return (
-    <form id="form-register" onSubmit={form.handleSubmit(onSubmit)}>
+    <form
+      id="form-register"
+      onSubmit={form.handleSubmit((data) => mutate(data))}
+    >
       <FieldSet className="w-full">
         <FieldGroup>
           <Controller
@@ -99,47 +112,54 @@ export function RegisterForm() {
               </Field>
             )}
           />
+          <FieldGroup className="flex flex-row">
+            <Controller
+              name="phonePrefix"
+              control={form.control}
+              render={({ field }) => (
+                <Select
+                  onValueChange={field.onChange}
+                  defaultValue={PHONE_PREFIXES[0].code}
+                >
+                  <SelectTrigger className="py-5 text-base w-30 ">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectGroup>
+                      {PHONE_PREFIXES.map((p) => (
+                        <SelectItem
+                          key={`${p.country}-${p.code}`}
+                          value={p.code}
+                        >
+                          <span className="mr-auto">{p.country}</span>
+                          <span>{p.code}</span>
+                        </SelectItem>
+                      ))}
+                    </SelectGroup>
+                  </SelectContent>
+                </Select>
+              )}
+            />
 
-          <Controller
-            name="phone"
-            control={form.control}
-            render={({ field, fieldState }) => (
-              <Field data-invalid={fieldState.invalid}>
-                <FieldLabel htmlFor="phone-id">Phone number</FieldLabel>
-                <div className="flex gap-2">
-                  <Select defaultValue={PHONE_PREFIXES[0].code}>
-                    <SelectTrigger className="py-5 text-base w-30">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectGroup>
-                        {PHONE_PREFIXES.map((p) => (
-                          <SelectItem
-                            key={`${p.country}-${p.code}`}
-                            value={p.code}
-                          >
-                            <span className="mr-auto"> {p.country}</span>
-                            <span>{p.code} </span>
-                          </SelectItem>
-                        ))}
-                      </SelectGroup>
-                    </SelectContent>
-                  </Select>
+            <Controller
+              name="phoneNumber"
+              control={form.control}
+              render={({ field, fieldState }) => (
+                <Field data-invalid={fieldState.invalid}>
                   <Input
                     {...field}
                     id="phone-id"
                     aria-invalid={fieldState.invalid}
-                    placeholder="Phone number"
+                    placeholder="712 345 678"
                     className="py-5 text-base"
                   />
-                </div>
-                {fieldState.invalid && (
-                  <FieldError errors={[fieldState.error]} />
-                )}
-              </Field>
-            )}
-          />
-
+                  {fieldState.invalid && (
+                    <FieldError errors={[fieldState.error]} />
+                  )}
+                </Field>
+              )}
+            />
+          </FieldGroup>
           <Controller
             name="password"
             control={form.control}

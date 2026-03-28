@@ -1,7 +1,7 @@
 "use client";
 import { Header } from "@/components/auth/header";
 import { RegisterForm } from "@/components/auth/register-form";
-import { useAuth } from "@/contexts/auth-context";
+import { useAuth } from "@/common/contexts/auth-context";
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
 import { Fragment } from "react/jsx-runtime";

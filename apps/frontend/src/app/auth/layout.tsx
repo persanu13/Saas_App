@@ -6,7 +6,7 @@ import { HugeiconsIcon } from "@hugeicons/react";
 
 import Image from "next/image";
 import { ArrowLeft02Icon } from "@hugeicons/core-free-icons";
-import { AuthProvider } from "@/contexts/auth-context";
+import { AuthProvider } from "@/common/contexts/auth-context";
 
 export default function AuthLayout({
   children,

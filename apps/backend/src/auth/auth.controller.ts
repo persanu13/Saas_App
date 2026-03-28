@@ -16,6 +16,7 @@ import { ConfigService } from '@nestjs/config';
 import { JwtRefreshAuthGuard } from './guards/jwt-refresh-auth.guard';
 import { Public } from './decorators/public.decorator';
 import { EmailDto } from './dto/email.dto';
+import { Throttle } from '@nestjs/throttler';
 
 @Controller('auth')
 export class AuthController {
@@ -32,6 +33,7 @@ export class AuthController {
   }
 
   // #region Login
+  @Throttle({ long: { ttl: 300000, limit: 5 } })
   @Public()
   @UseGuards(LocalAuthGuard)
   @HttpCode(HttpStatus.OK)

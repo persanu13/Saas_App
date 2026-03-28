@@ -12,6 +12,7 @@ export class UsersService {
     email: string,
     name: string,
     type: UserType,
+    phone?: string,
     hashPassword?: string,
     image?: string,
   ) {
@@ -19,6 +20,7 @@ export class UsersService {
       data: {
         email,
         name,
+        phone,
         type,
         hashPassword,
         image,
@@ -28,6 +30,7 @@ export class UsersService {
         name: true,
         email: true,
         emailVerified: true,
+        phone: true,
         image: true,
         type: true,
         isActive: true,

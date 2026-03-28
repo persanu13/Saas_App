@@ -51,21 +51,17 @@ export class PasswordService {
   }
 
   async resetPassword(token: string, newPassword: string) {
-    const record = await this.prisma.passwordResetToken.findFirst({
-      where: { token },
-    });
-
-    if (!record || record.expiresAt < new Date() || record.used) {
-      throw new BadRequestException('Invalid token');
-    }
-
-    const newPasswordHash = await bcrypt.hash(newPassword, 10);
-    await this.usersService.updatePassword(record.userId, newPasswordHash);
-
-    await this.prisma.passwordResetToken.deleteMany({
-      where: { userId: record.userId },
-    });
-
-    return { message: 'Password reseted succesful!' };
+    // const record = await this.prisma.passwordResetToken.findFirst({
+    //   where: { token },
+    // });
+    // if (!record || record.expiresAt < new Date() || record.used) {
+    //   throw new BadRequestException('Invalid token');
+    // }
+    // const newPasswordHash = await bcrypt.hash(newPassword, 10);
+    // await this.usersService.updatePassword(record.userId, newPasswordHash);
+    // await this.prisma.passwordResetToken.deleteMany({
+    //   where: { userId: record.userId },
+    // });
+    // return { message: 'Password reseted succesful!' };
   }
 }

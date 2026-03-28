@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { isValidPhoneNumber } from "libphonenumber-js";
 
 export const emailSchema = z.object({
   email: z.string().min(1, "Email is required").email("Email format invalid"),
@@ -9,10 +10,9 @@ export const registerSchema = z
     email: z.string().min(1, "Email is required").email("Email format invalid"),
     firstName: z.string().min(1, "First name is required"),
     lastName: z.string().min(1, "Last name is required"),
-    phone: z
-      .string()
-      .min(1, "Phone is required")
-      .regex(/^\+?[0-9]{10,15}$/, "Phone format invalid"),
+
+    phonePrefix: z.string().min(1),
+    phoneNumber: z.string().min(1, "Phone is required"),
 
     password: z
       .string()
@@ -33,4 +33,11 @@ export const registerSchema = z
   .refine((data) => data.password === data.confirmPassword, {
     message: "Passwords do not match",
     path: ["confirmPassword"],
-  });
+  })
+  .refine(
+    (data) => isValidPhoneNumber(`${data.phonePrefix}${data.phoneNumber}`),
+    {
+      message: "Phone format invalid",
+      path: ["phoneNumber"], // eroarea apare pe input-ul de număr
+    },
+  );
