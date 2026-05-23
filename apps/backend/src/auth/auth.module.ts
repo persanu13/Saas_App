@@ -13,13 +13,14 @@ import { SessionService } from './session/session.service';
 import { JwtRefreshStrategy } from './strategys/jwt-refresh.strategy';
 import { APP_GUARD } from '@nestjs/core';
 import { JwtAuthGuard } from './guards/jwt-auth.guard';
-import { GoogleStrategy } from './strategys/google.strategy';
+import { GoogleStrategy } from './google/google.strategy';
 import { AccountService } from './account/account.service';
 import { RegistrationService } from './registration/registration.service';
 import { RegistrationController } from './registration/registration.controller';
 import { PasswordController } from './password/password.controller';
 import { PasswordService } from './password/password.service';
 import { GoogleController } from './google/google.controller';
+import { GoogleService } from './google/google.service';
 
 @Module({
   imports: [
@@ -30,6 +31,10 @@ import { GoogleController } from './google/google.controller';
     JwtModule.register({}),
   ],
   providers: [
+    {
+      provide: APP_GUARD,
+      useClass: JwtAuthGuard,
+    },
     AuthService,
     LocalStrategy,
     JwtStrategy,
@@ -40,6 +45,7 @@ import { GoogleController } from './google/google.controller';
     AccountService,
     RegistrationService,
     PasswordService,
+    GoogleService,
   ],
   controllers: [
     AuthController,

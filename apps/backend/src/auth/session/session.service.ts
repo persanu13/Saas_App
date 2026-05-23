@@ -15,7 +15,21 @@ export class SessionService {
     });
   }
 
-  async findUserSessions(userId: number) {
+  async updateSesion(
+    oldSesionToken: string,
+    expiresMs: number,
+    newSesionToken: string,
+  ) {
+    return await this.prisma.session.update({
+      where: { sessionToken: oldSesionToken },
+      data: {
+        sessionToken: newSesionToken,
+        expires: new Date(Date.now() + expiresMs),
+      },
+    });
+  }
+
+  async findUserActiveSessions(userId: number) {
     return await this.prisma.session.findMany({
       where: {
         userId: userId,

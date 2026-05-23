@@ -11,6 +11,7 @@ import { Session, UserType } from 'generated/prisma/client';
 import { SessionService } from './session/session.service';
 import { JwtPayload } from './interfaces/payload';
 import * as crypto from 'crypto';
+import * as bcrypt from 'bcrypt';
 import { AccountService } from './account/account.service';
 
 @Injectable()
@@ -49,11 +50,51 @@ export class AuthService {
     return { exists: true };
   }
 
-  async login(user: JwtPayload) {
-    const { accessToken, refreshToken } = await this.createTokens(
-      user.sub,
-      user.email,
+  async validateUser(
+    email: string,
+    password: string,
+    type: UserType,
+  ): Promise<any> {
+    const user = await this.usersService.findByEmail(email, type);
+
+    if (!user) {
+      throw new UnauthorizedException('Invalid credentials');
+    }
+
+    if (!user.hashPassword) {
+      throw new UnauthorizedException('Invalid credentials');
+    }
+
+    const isMatch = await bcrypt.compare(password, user.hashPassword);
+    if (!isMatch) {
+      throw new UnauthorizedException('Invalid credentials');
+    }
+
+    if (!user.isActive) {
+      throw new ForbiddenException(
+        'Your account has been deactivated. Contact support.',
+      );
+    }
+
+    if (!user.emailVerified) {
+      throw new UnauthorizedException('Invalid credentials');
+    }
+
+    return user;
+  }
+
+  async login(payload: JwtPayload) {
+    const { accessToken, refreshToken } = await this.createTokens(payload);
+
+    const expiresMs = parseInt(
+      this.configService.getOrThrow('JWT_REFRESH_TOKEN_EXPIRATION_MS'),
     );
+    const refreshTokenHash = crypto
+      .createHash('sha256')
+      .update(refreshToken)
+      .digest('hex');
+
+    await this.sesionService.create(refreshTokenHash, payload.sub, expiresMs);
 
     return {
       accessToken,
@@ -69,34 +110,7 @@ export class AuthService {
     this.sesionService.deactivateSession(tokenHash);
   }
 
-  async validateUser(email: string, password: string): Promise<any> {
-    // const user = await this.usersService.findByEmail(email);
-    // if (!user) {
-    //   throw new UnauthorizedException('Invalid credentials');
-    // }
-    // if (!user.hashPassword) {
-    //   throw new BadRequestException(
-    //     'This account use OAuth. Connect with Google/GitHub.',
-    //   );
-    // }
-    // const isMatch = await bcrypt.compareSync(password, user.hashPassword);
-    // if (!isMatch) {
-    //   throw new UnauthorizedException('Invalid credentials');
-    // }
-    // if (!user.emailVerified) {
-    //   throw new EmailNotVerifiedException();
-    // }
-    // if (!user.isActive) {
-    //   throw new ForbiddenException(
-    //     'Your account has been deactivated. Contact support.',
-    //   );
-    // }
-    // return user;
-  }
-
-  async createTokens(userId: number, email: string) {
-    const payload: JwtPayload = { sub: userId, email: email };
-
+  async createTokens(payload: JwtPayload) {
     const accessToken = await this.jwtService.signAsync(payload, {
       secret: this.configService.getOrThrow('JWT_ACCESS_TOKEN_SECRET'),
       expiresIn: `${this.configService.getOrThrow(
@@ -111,96 +125,48 @@ export class AuthService {
       )}ms`,
     });
 
-    const expiresMs = parseInt(
-      this.configService.getOrThrow('JWT_REFRESH_TOKEN_EXPIRATION_MS'),
-    );
-
-    const refreshTokenHash = crypto
-      .createHash('sha256')
-      .update(refreshToken)
-      .digest('hex');
-
-    await this.sesionService.create(refreshTokenHash, userId, expiresMs);
-
     return {
       accessToken,
       refreshToken,
     };
   }
 
-  async rotateTokens(sessionToken: string, user: JwtPayload) {
-    await this.sesionService.deactivateSession(sessionToken);
+  async rotateTokens(sessionToken: string, payload: JwtPayload) {
+    const { accessToken, refreshToken } = await this.createTokens(payload);
+    const expiresMs = parseInt(
+      this.configService.getOrThrow('JWT_REFRESH_TOKEN_EXPIRATION_MS'),
+    );
+    const refreshTokenHash = crypto
+      .createHash('sha256')
+      .update(refreshToken)
+      .digest('hex');
 
-    const { accessToken, refreshToken } = await this.createTokens(
-      user.sub,
-      user.email,
+    await this.sesionService.updateSesion(
+      sessionToken,
+      expiresMs,
+      refreshTokenHash,
     );
 
     return { accessToken, refreshToken };
   }
 
   async verificationSession(refreshToken: string, payload: JwtPayload) {
-    const sessions = await this.sesionService.findUserSessions(payload.sub);
+    const sessions = await this.sesionService.findUserActiveSessions(
+      payload.sub,
+    );
 
-    let validSession: Session | null = null;
+    const tokenHash = crypto
+      .createHash('sha256')
+      .update(refreshToken)
+      .digest('hex');
+
     for (const session of sessions) {
-      const tokenHash = crypto
-        .createHash('sha256')
-        .update(refreshToken)
-        .digest('hex');
       const isMatch = session.sessionToken === tokenHash;
       if (isMatch) {
-        validSession = session;
-        break;
+        return session;
       }
     }
 
-    if (!validSession) {
-      throw new UnauthorizedException('Invalid session!');
-    }
-
-    return validSession;
-  }
-
-  async validateGoogleUser(googleUser: {
-    provider: string;
-    providerAccountId: any;
-    email: any;
-    name: any;
-    picture: any;
-    accessToken: string;
-    refreshToken: string;
-  }) {
-    // const existingAccount = await this.accountService.findOneByProvider(
-    //   googleUser.provider,
-    //   googleUser.providerAccountId,
-    // );
-    // if (existingAccount) {
-    //   return existingAccount.user;
-    // }
-    // const existingUser = await this.usersService.findByEmail(googleUser.email);
-    // if (existingUser) {
-    //   await this.accountService.create(
-    //     googleUser.provider,
-    //     googleUser.providerAccountId,
-    //     googleUser.accessToken,
-    //     googleUser.refreshToken,
-    //     existingUser.id,
-    //   );
-    //   return existingUser;
-    // }
-    // const newUser = await this.usersService.create(
-    //   googleUser.email,
-    //   googleUser.name,
-    //   googleUser.picture,
-    // );
-    // await this.accountService.create(
-    //   googleUser.provider,
-    //   googleUser.providerAccountId,
-    //   googleUser.accessToken,
-    //   googleUser.refreshToken,
-    //   newUser.id,
-    // );
-    // return newUser;
+    throw new UnauthorizedException('Invalid session!');
   }
 }

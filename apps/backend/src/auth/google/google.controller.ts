@@ -1,8 +1,8 @@
-import { Controller, Get, Req, Res, UseGuards } from '@nestjs/common';
+import { Controller, Get, Query, Req, Res, UseGuards } from '@nestjs/common';
 import { AuthService } from '../auth.service';
 import { ConfigService } from '@nestjs/config';
 import { Public } from '../decorators/public.decorator';
-import { GoogleAuthGuard } from '../guards/google-auth.guard';
+import { GoogleAuthGuard } from './google-auth.guard';
 
 @Controller('auth/google')
 export class GoogleController {
@@ -14,7 +14,7 @@ export class GoogleController {
   @Public()
   @UseGuards(GoogleAuthGuard)
   @Get()
-  async googleAuth() {}
+  async googleAuth(@Query('type') type: string) {}
 
   @Public()
   @UseGuards(GoogleAuthGuard)
@@ -30,9 +30,6 @@ export class GoogleController {
         this.configService.getOrThrow('JWT_REFRESH_TOKEN_EXPIRATION_MS'),
       ),
     });
-
-    res.redirect(
-      `${this.configService.get('FRONTEND_URL')}/auth/callback?accessToken=${accessToken}`,
-    );
+    res.redirect(`${this.configService.get('FRONTEND_URL')}/`);
   }
 }

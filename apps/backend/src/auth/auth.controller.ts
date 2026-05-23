@@ -33,7 +33,7 @@ export class AuthController {
   }
 
   // #region Login
-  @Throttle({ long: { ttl: 300000, limit: 5 } })
+  @Throttle({ long: { ttl: 300000, limit: 500 } })
   @Public()
   @UseGuards(LocalAuthGuard)
   @HttpCode(HttpStatus.OK)
@@ -51,7 +51,7 @@ export class AuthController {
       ),
     });
 
-    return { access_token: accessToken };
+    return { access_token: accessToken, user: req.user };
   }
   // #endregion
 
@@ -86,8 +86,8 @@ export class AuthController {
         this.configService.getOrThrow('JWT_REFRESH_TOKEN_EXPIRATION_MS'),
       ),
     });
-
-    return { access_token: accessToken };
+    req.user.session = undefined;
+    return { access_token: accessToken, user: req.user };
   }
 
   @HttpCode(HttpStatus.OK)

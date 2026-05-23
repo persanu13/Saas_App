@@ -1,3 +1,4 @@
+import { useAuthStore, UserPayload } from "@/common/stores/auth.store";
 import axios from "axios";
 
 export type ApiResponse<T> = {
@@ -19,27 +20,75 @@ export type ApiError = {
 
 const axiosApi = axios.create({
   baseURL: process.env.NEXT_PUBLIC_API_URL,
+  withCredentials: true,
   timeout: 10000,
   headers: {
     "Content-Type": "application/json",
   },
 });
 
+axiosApi.interceptors.request.use((config) => {
+  const token = useAuthStore.getState().accessToken;
+  if (token) {
+    config.headers.Authorization = `Bearer ${token}`;
+  }
+  return config;
+});
+
 axiosApi.interceptors.response.use(
   (response) => response,
-  (error) => {
-    if (axios.isAxiosError(error)) {
-      if (error.response) {
+  async (error) => {
+    if (!axios.isAxiosError(error)) {
+      return Promise.reject({
+        statusCode: 500,
+        message: "Somethin went wrong!",
+        timestamp: new Date().toISOString(),
+      });
+    }
+
+    if (error.response) {
+      const original = error.config as any;
+
+      const isAuthEndpoint =
+        original?.url?.includes("/auth/login") ||
+        original?.url?.includes("/auth/refresh") ||
+        original?.url?.includes("/auth/email") ||
+        original?.url?.includes("/auth/registration");
+
+      if (error.response.status !== 401 || original._retry || isAuthEndpoint) {
         return Promise.reject(error.response.data);
       }
-      if (error.request) {
-        return Promise.reject({
-          statusCode: 503,
-          message: "Server don't work!",
-          timestamp: new Date().toISOString(),
-        });
+
+      original._retry = true;
+
+      try {
+        const res = await axiosApi.post<
+          ApiResponse<{
+            access_token: string;
+            user: UserPayload;
+          }>
+        >("/auth/refresh");
+
+        const { access_token, user } = res.data.data;
+        useAuthStore.getState().setAuth(access_token, user);
+
+        original.headers.Authorization = `Bearer ${access_token}`;
+        return axiosApi(original);
+      } catch {
+        useAuthStore.getState().clearAuth();
+        //window.location.href = "/login";
+        return Promise.reject(error);
       }
     }
+
+    if (error.request) {
+      return Promise.reject({
+        statusCode: 503,
+        message: "Server don't work!",
+        timestamp: new Date().toISOString(),
+      });
+    }
+
     return Promise.reject({
       statusCode: 500,
       message: "Somethin went wrong!",

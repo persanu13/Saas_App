@@ -12,6 +12,7 @@ import { Public } from '../decorators/public.decorator';
 import { RegisterClientDto } from './dto/register-client.dto';
 import { EmailDto } from '../dto/email.dto';
 import { SkipThrottle, Throttle } from '@nestjs/throttler';
+import { RegisterProfessionalDto } from './dto/register-professional.dto';
 
 @Controller('auth/registration')
 export class RegistrationController {
@@ -22,6 +23,13 @@ export class RegistrationController {
   @Post('register-client')
   async registerClient(@Body() dto: RegisterClientDto) {
     return await this.registrationService.registerClient(dto);
+  }
+
+  @Public()
+  @HttpCode(HttpStatus.CREATED)
+  @Post('register-professional')
+  async registerProfessional(@Body() dto: RegisterProfessionalDto) {
+    return await this.registrationService.registerProfessional(dto);
   }
 
   @Public()
@@ -40,7 +48,7 @@ export class RegistrationController {
   @HttpCode(HttpStatus.OK)
   @Post('resend-email')
   async resendEmail(@Body() dto: EmailDto) {
-    await this.registrationService.sendVerificationEmail(dto.email);
+    await this.registrationService.sendVerificationEmail(dto.email, dto.type);
     return {
       message: 'Resend verification email succesful!',
     };

@@ -10,8 +10,8 @@ import { Fragment } from "react/jsx-runtime";
 
 export default function CustomerAuthPage() {
   const socialsButtons: SocialButton[] = [
-    { text: "Continue with Google", icon: GoogleIcon },
-    { text: "Continue with Facebook", icon: Facebook02Icon },
+    { provider: "google", icon: GoogleIcon },
+    { provider: "facebook", icon: Facebook02Icon },
   ];
 
   return (
@@ -22,7 +22,7 @@ export default function CustomerAuthPage() {
       />
       <SocialButtons buttons={socialsButtons} />
       <TextSeparator text="OR" />
-      <EmailForm />
+      <EmailForm userType="CUSTOMER" />
 
       <div>
         <h2 className="text-center font-semibold text-base">

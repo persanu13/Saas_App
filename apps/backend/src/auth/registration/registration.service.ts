@@ -13,6 +13,8 @@ import { ConfigService } from '@nestjs/config';
 import { AccountService } from '../account/account.service';
 import * as bcrypt from 'bcrypt';
 import * as crypto from 'crypto';
+import { RegisterProfessionalDto } from './dto/register-professional.dto';
+import { UserType } from 'generated/prisma/client';
 
 @Injectable()
 export class RegistrationService {
@@ -53,12 +55,46 @@ export class RegistrationService {
       hashPassword,
     );
     // Send verification email
-    this.sendVerificationEmail(registerDto.email);
+    this.sendVerificationEmail(registerDto.email, 'CUSTOMER');
     return user;
   }
 
-  async sendVerificationEmail(email: string) {
-    const user = await this.usersService.findByEmail(email, 'CUSTOMER');
+  async registerProfessional(registerDto: RegisterProfessionalDto) {
+    // Verification if email is already used
+    const existingUser = await this.usersService.findByEmail(
+      registerDto.email,
+      'PROFESSIONAL',
+    );
+    if (existingUser) {
+      if (!existingUser.isActive) {
+        throw new ForbiddenException(
+          'This account has been disabled. Contact support.',
+        );
+      }
+      if (!existingUser.emailVerified) {
+        return {
+          message: 'Account already exists. You need to verified your email.',
+        };
+      }
+      throw new ConflictException('The email is already in use.');
+    }
+    // Hash the password
+    const hashPassword = await bcrypt.hash(registerDto.password, 10);
+    // Create user
+    const user = await this.usersService.create(
+      registerDto.email,
+      registerDto.name,
+      'PROFESSIONAL',
+      registerDto.phone,
+      hashPassword,
+    );
+    // Send verification email
+    this.sendVerificationEmail(registerDto.email, 'PROFESSIONAL');
+    return user;
+  }
+
+  async sendVerificationEmail(email: string, type: UserType) {
+    const user = await this.usersService.findByEmail(email, type);
     if (!user) {
       throw new NotFoundException('User not found');
     }

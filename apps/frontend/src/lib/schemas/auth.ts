@@ -1,8 +1,17 @@
 import { z } from "zod";
 import { isValidPhoneNumber } from "libphonenumber-js";
 
+export type UserType = "CUSTOMER" | "PROFESSIONAL";
+
 export const emailSchema = z.object({
   email: z.string().min(1, "Email is required").email("Email format invalid"),
+  type: z.enum(["CUSTOMER", "PROFESSIONAL"]),
+});
+
+export const loginSchema = z.object({
+  email: z.string(),
+  password: z.string().min(8, "Password must be at least 8 characters"),
+  type: z.enum(["CUSTOMER", "PROFESSIONAL"]),
 });
 
 export const registerSchema = z
@@ -38,6 +47,6 @@ export const registerSchema = z
     (data) => isValidPhoneNumber(`${data.phonePrefix}${data.phoneNumber}`),
     {
       message: "Phone format invalid",
-      path: ["phoneNumber"], // eroarea apare pe input-ul de număr
+      path: ["phoneNumber"],
     },
   );

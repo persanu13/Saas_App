@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation";
 import { useEffect } from "react";
 import { Fragment } from "react/jsx-runtime";
 
-export default function CustomerRegisterAuthPage() {
+export default function CustomerRegisterPage() {
   const router = useRouter();
   const { email } = useAuth();
 
@@ -25,7 +25,7 @@ export default function CustomerRegisterAuthPage() {
         description={`You're almost there! Create your new account for ${email} by completing these details`}
       />
 
-      <RegisterForm />
+      <RegisterForm userType="CUSTOMER" />
     </Fragment>
   );
 }

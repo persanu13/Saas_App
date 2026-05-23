@@ -15,7 +15,7 @@ import { Controller, useForm } from "react-hook-form";
 import z from "zod";
 import { useAuth } from "@/common/contexts/auth-context";
 import { useRouter } from "next/navigation";
-import { registerSchema } from "@/lib/schemas/login";
+import { registerSchema, UserType } from "@/lib/schemas/auth";
 import { Checkbox } from "../ui/checkbox";
 import {
   Select,
@@ -30,14 +30,17 @@ import { useMutation } from "@tanstack/react-query";
 
 import { toast } from "sonner";
 import { ApiError } from "@/lib/axios";
-import { registerCall } from "@/api/auth/register";
+import {
+  registerCustomerCall,
+  registerProfessionalCall,
+} from "@/api/auth/register";
 
 const PHONE_PREFIXES = getCountries().map((country) => ({
   country,
   code: `+${getCountryCallingCode(country)}`,
 }));
 
-export function RegisterForm() {
+export function RegisterForm({ userType }: { userType: UserType }) {
   const router = useRouter();
   const { email } = useAuth();
 
@@ -57,9 +60,10 @@ export function RegisterForm() {
   });
 
   const { mutate, isPending } = useMutation({
-    mutationFn: registerCall,
+    mutationFn:
+      userType == "CUSTOMER" ? registerCustomerCall : registerProfessionalCall,
     onSuccess: (res) => {
-      router.push("email-verification");
+      router.push("/auth/email-verification");
     },
     onError: (err: ApiError) => {
       toast.error(err.details.message);

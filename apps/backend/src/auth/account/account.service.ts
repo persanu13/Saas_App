@@ -1,16 +1,24 @@
 import { Injectable } from '@nestjs/common';
+import { UserType } from 'generated/prisma/enums';
 import { PrismaService } from 'src/prisma/prisma.service';
 
 @Injectable()
 export class AccountService {
   constructor(private prisma: PrismaService) {}
 
-  async findOneByProvider(provider: string, providerAccountId: string) {
+  async findOneByProvider(
+    provider: string,
+    providerAccountId: string,
+    userType: UserType,
+  ) {
     return await this.prisma.account.findUnique({
       where: {
         provider_providerAccountId: {
           provider,
           providerAccountId,
+        },
+        user: {
+          type: userType,
         },
       },
       include: { user: true },

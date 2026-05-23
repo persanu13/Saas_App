@@ -15,16 +15,16 @@ export class RegisterClientDto {
   @IsNotEmpty()
   @MinLength(2)
   @MaxLength(100)
-  name: string;
+  name!: string;
 
   @IsEmail()
   @Transform(({ value }) => value.toLowerCase().trim())
-  email: string;
+  email!: string;
 
   @IsString()
   @IsPhoneNumber()
-  phone: string;
+  phone!: string;
 
   @IsStrongPassword()
-  password: string;
+  password!: string;
 }

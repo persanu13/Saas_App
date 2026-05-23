@@ -1,9 +1,24 @@
 import { api } from "@/lib/axios";
-import { emailSchema, registerSchema } from "@/lib/schemas/login";
+import { emailSchema, registerSchema } from "@/lib/schemas/auth";
 import z from "zod";
 
-export async function registerCall(formData: z.infer<typeof registerSchema>) {
+export async function registerCustomerCall(
+  formData: z.infer<typeof registerSchema>,
+) {
   const path: string = "/auth/registration/register-client";
+  const data = {
+    name: `${formData.lastName} ${formData.firstName}`,
+    email: formData.email,
+    phone: `${formData.phonePrefix}${formData.phoneNumber}`,
+    password: formData.password,
+  };
+  return api.post<any>(path, data);
+}
+
+export async function registerProfessionalCall(
+  formData: z.infer<typeof registerSchema>,
+) {
+  const path: string = "/auth/registration/register-professional";
   const data = {
     name: `${formData.lastName} ${formData.firstName}`,
     email: formData.email,

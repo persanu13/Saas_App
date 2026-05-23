@@ -4,6 +4,7 @@ import "./globals.css";
 import { cn } from "@/lib/utils";
 import { Toaster } from "sonner";
 import { TanStackProvider } from "@/common/providers/tan-stack-provider";
+import { AuthInitializer } from "@/common/components/auth-initializer";
 
 const jetbrainsMono = JetBrains_Mono({
   subsets: ["latin"],
@@ -23,7 +24,9 @@ export default function RootLayout({
   return (
     <html lang="en" className={cn("font-mono", jetbrainsMono.variable)}>
       <body>
-        <TanStackProvider>{children}</TanStackProvider>
+        <TanStackProvider>
+          <AuthInitializer>{children}</AuthInitializer>
+        </TanStackProvider>
         <Toaster position="top-right" />
       </body>
     </html>

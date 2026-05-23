@@ -12,24 +12,17 @@ import { Button } from "../ui/button";
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Controller, useForm } from "react-hook-form";
-import { emailSchema } from "@/lib/schemas/login";
+import { emailSchema, UserType } from "@/lib/schemas/auth";
 import z from "zod";
 import { useAuth } from "@/common/contexts/auth-context";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
-import { AxiosResponse } from "axios";
 
-import {
-  useQuery,
-  useMutation,
-  useQueryClient,
-  QueryClient,
-  QueryClientProvider,
-} from "@tanstack/react-query";
+import { useMutation } from "@tanstack/react-query";
 import { ApiError } from "@/lib/axios";
 import { emailCall } from "@/api/auth/auth";
 
-export function EmailForm() {
+export function EmailForm({ userType }: { userType: UserType }) {
   const router = useRouter();
 
   const { setEmail } = useAuth();
@@ -38,6 +31,7 @@ export function EmailForm() {
     resolver: zodResolver(emailSchema),
     defaultValues: {
       email: "",
+      type: userType,
     },
     mode: "onBlur",
   });
@@ -45,12 +39,16 @@ export function EmailForm() {
   const { mutate, isPending } = useMutation({
     mutationFn: emailCall,
     onSuccess: (res) => {
+      console.log(1);
+      setEmail(form.getValues("email"));
       if (!res.data.exists) {
-        setEmail(form.getValues("email"));
-        router.push("customer/register");
+        router.push(`/auth/${userType.toLowerCase()}/register`);
+      } else {
+        router.push(`/auth/${userType.toLowerCase()}/login`);
       }
     },
     onError: (err: ApiError) => {
+      console.log(err);
       if (err.statusCode === 401) {
         setEmail(form.getValues("email"));
         router.push("/auth/email-verification");
