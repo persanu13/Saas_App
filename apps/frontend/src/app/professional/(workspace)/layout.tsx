@@ -8,6 +8,7 @@ export default function WorkspaceLayout({
 }) {
   return (
     <SidebarProvider
+      className="min-h-[calc(100svh-64px)] "
       style={
         {
           "--sidebar-width": "4.2rem",
@@ -16,8 +17,7 @@ export default function WorkspaceLayout({
       }
     >
       <AppSidebar />
-
-      <main className="flex flex-col  h-screen w-full">{children}</main>
+      <main className="flex flex-col w-full flex-1">{children}</main>
     </SidebarProvider>
   );
 }

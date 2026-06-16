@@ -2,6 +2,7 @@
 import { HugeiconsIcon } from "@hugeicons/react";
 import { Button } from "../ui/button";
 import { IconSvgElement } from "@hugeicons/react";
+import { UserType } from "@/lib/schemas/auth";
 
 export type SocialButton = {
   provider: string;
@@ -10,11 +11,12 @@ export type SocialButton = {
 
 interface SocialButtonsProps {
   buttons: SocialButton[];
+  userType: UserType;
 }
 
-export function SocialButtons({ buttons }: SocialButtonsProps) {
+export function SocialButtons({ buttons, userType }: SocialButtonsProps) {
   const handleSocialLogin = (provider: string) => {
-    window.location.href = `http://localhost:8080/auth/${provider}?type=CUSTOMER`;
+    window.location.href = `http://localhost:8080/auth/${provider}?type=${userType}`;
   };
   return (
     <div className="flex flex-col items-center gap-3">

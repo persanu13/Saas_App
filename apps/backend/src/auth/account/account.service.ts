@@ -10,12 +10,14 @@ export class AccountService {
     provider: string,
     providerAccountId: string,
     userType: UserType,
+    userId: number,
   ) {
     return await this.prisma.account.findUnique({
       where: {
-        provider_providerAccountId: {
+        provider_providerAccountId_userId: {
           provider,
           providerAccountId,
+          userId,
         },
         user: {
           type: userType,
@@ -34,7 +36,7 @@ export class AccountService {
   async create(
     provider: string,
     providerAccountId: string,
-    accesToken: string,
+    accessToken: string,
     refreshToken: string,
     userId: number,
   ) {
@@ -43,9 +45,37 @@ export class AccountService {
         provider,
         providerAccountId,
         type: 'oauth',
-        access_token: accesToken,
+        access_token: accessToken,
         refresh_token: refreshToken,
         userId,
+      },
+    });
+  }
+
+  async createWithUser(
+    email: string,
+    name: string,
+    userType: UserType,
+    provider: string,
+    providerAccountId: string,
+    accessToken: string,
+    refreshToken: string,
+  ) {
+    return await this.prisma.user.create({
+      data: {
+        email: email,
+        name: name,
+        type: userType,
+        emailVerified: new Date(),
+        accounts: {
+          create: {
+            provider: provider,
+            providerAccountId: providerAccountId,
+            type: 'oauth',
+            access_token: accessToken,
+            refresh_token: refreshToken,
+          },
+        },
       },
     });
   }

@@ -3,6 +3,7 @@ import { AuthService } from '../auth.service';
 import { ConfigService } from '@nestjs/config';
 import { Public } from '../decorators/public.decorator';
 import { GoogleAuthGuard } from './google-auth.guard';
+import { UserType } from 'generated/prisma/enums';
 
 @Controller('auth/google')
 export class GoogleController {
@@ -30,6 +31,11 @@ export class GoogleController {
         this.configService.getOrThrow('JWT_REFRESH_TOKEN_EXPIRATION_MS'),
       ),
     });
-    res.redirect(`${this.configService.get('FRONTEND_URL')}/`);
+    const userType = req.user.type as UserType;
+    if (userType == 'PROFESSIONAL') {
+      res.redirect(`${this.configService.get('FRONTEND_URL')}/professional`);
+    } else {
+      res.redirect(`${this.configService.get('FRONTEND_URL')}/`);
+    }
   }
 }

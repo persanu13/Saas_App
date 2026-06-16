@@ -19,40 +19,43 @@ export class GoogleService {
     accessToken: string;
     refreshToken: string;
   }) {
-    const existingAccount = await this.accountService.findOneByProvider(
-      googleUser.provider,
-      googleUser.providerAccountId,
-      googleUser.type,
-    );
-    if (existingAccount) {
-      return existingAccount.user;
-    }
+    // verific daca exista user cu email si type
+
+    // daca da, verific daca exista accont si daca nu exista cont fac eu unul daca exista returnez userul
+    // daca nu fac user cu account o singura comanda prisma
+
     const existingUser = await this.usersService.findByEmail(
       googleUser.email,
       googleUser.type,
     );
+
     if (existingUser) {
-      await this.accountService.create(
+      const existingAccount = await this.accountService.findOneByProvider(
+        googleUser.provider,
+        googleUser.providerAccountId,
+        googleUser.type,
+        existingUser.id,
+      );
+      if (!existingAccount) {
+        await this.accountService.create(
+          googleUser.provider,
+          googleUser.providerAccountId,
+          googleUser.accessToken,
+          googleUser.refreshToken,
+          existingUser.id,
+        );
+      }
+      return existingUser;
+    } else {
+      return await this.accountService.createWithUser(
+        googleUser.email,
+        googleUser.name,
+        googleUser.type,
         googleUser.provider,
         googleUser.providerAccountId,
         googleUser.accessToken,
         googleUser.refreshToken,
-        existingUser.id,
       );
-      return existingUser;
     }
-    const newUser = await this.usersService.create(
-      googleUser.email,
-      googleUser.name,
-      googleUser.type,
-    );
-    await this.accountService.create(
-      googleUser.provider,
-      googleUser.providerAccountId,
-      googleUser.accessToken,
-      googleUser.refreshToken,
-      newUser.id,
-    );
-    return newUser;
   }
 }

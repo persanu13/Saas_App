@@ -4,9 +4,8 @@ import { useQuery } from "@tanstack/react-query";
 import { useAuthStore } from "../stores/auth.store";
 import { refreshCall } from "@/api/auth/auth";
 import { useEffect } from "react";
-
 export const useInitAuth = () => {
-  const { setAuth, clearAuth } = useAuthStore();
+  const { setAuth, clearAuth, setLoading } = useAuthStore();
 
   const query = useQuery({
     queryKey: ["auth", "refresh"],
@@ -19,13 +18,18 @@ export const useInitAuth = () => {
   });
 
   useEffect(() => {
+    if (query.isPending) return; // ← încă se încarcă
+
     if (query.data) {
       setAuth(query.data.data.access_token, query.data.data.user);
     }
+
     if (query.isError) {
       clearAuth();
     }
-  }, [query.data, query.isError]);
+
+    setLoading(false); // ← doar după ce s-a terminat query-ul
+  }, [query.data, query.isError, query.isPending]);
 
   return query;
 };

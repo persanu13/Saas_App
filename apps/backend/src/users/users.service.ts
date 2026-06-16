@@ -76,8 +76,23 @@ export class UsersService {
     return `This action returns all users`;
   }
 
-  findOne(id: number) {
-    return `This action returns a #${id} user`;
+  async findOne(userId: number) {
+    return await this.prisma.user.findUnique({
+      where: { id: userId },
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        hashPassword: true,
+        emailVerified: true,
+        image: true,
+        phone: true,
+        type: true,
+        isActive: true,
+        createdAt: true,
+        updatedAt: true,
+      },
+    });
   }
 
   update(id: number, updateUserDto: UpdateUserDto) {

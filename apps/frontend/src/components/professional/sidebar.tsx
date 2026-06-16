@@ -66,7 +66,7 @@ export function AppSidebar() {
   const pathname = usePathname();
 
   return (
-    <Sidebar>
+    <Sidebar className="mt-16">
       <SidebarContent>
         <SidebarGroup />
         <SidebarGroupContent>

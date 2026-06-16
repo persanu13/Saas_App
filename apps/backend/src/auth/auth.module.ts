@@ -21,6 +21,7 @@ import { PasswordController } from './password/password.controller';
 import { PasswordService } from './password/password.service';
 import { GoogleController } from './google/google.controller';
 import { GoogleService } from './google/google.service';
+import { RolesGuard } from './guards/roles.guard';
 
 @Module({
   imports: [
@@ -34,6 +35,10 @@ import { GoogleService } from './google/google.service';
     {
       provide: APP_GUARD,
       useClass: JwtAuthGuard,
+    },
+    {
+      provide: APP_GUARD,
+      useClass: RolesGuard,
     },
     AuthService,
     LocalStrategy,

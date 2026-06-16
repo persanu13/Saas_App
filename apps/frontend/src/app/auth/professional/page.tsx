@@ -22,7 +22,7 @@ export default function ProffesionalAuthPage() {
       />
       <EmailForm userType="PROFESSIONAL" />
       <TextSeparator text="OR" />
-      <SocialButtons buttons={socialsButtons} />
+      <SocialButtons buttons={socialsButtons} userType="PROFESSIONAL" />
       <div>
         <h2 className="text-center font-semibold text-base">
           Are you a customer looking to book an appointment ?
@@ -31,7 +31,7 @@ export default function ProffesionalAuthPage() {
           className="w-full"
           nativeButton={false}
           variant="link"
-          render={<Link href="/auth" />}
+          render={<Link href="/auth/customer" />}
         >
           Go to Trimly for customers
         </Button>

@@ -1,39 +1,66 @@
+import { getCalendar } from "@/api/calendar";
+import { Button } from "../ui/button";
+
+import { useQuery } from "@tanstack/react-query";
+import { useSearchParams } from "next/navigation";
+
 export function Schedule() {
-  const slots = Array.from({ length: 96 }, (_, i) => {
-    const h = Math.floor(i / 4);
-    const m = (i % 4) * 15;
-    return {
-      time: `${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}`,
-      isHour: m === 0,
-    };
+  const hours = Array.from(
+    { length: 24 },
+    (_, i) => String(i).padStart(2, "0") + ":00",
+  );
+
+  const slots = Array.from({ length: 24 * 4 }, (_, i) => {
+    const totalMin = i * 15;
+    const h = Math.floor(totalMin / 60);
+    const m = totalMin % 60;
+    return `${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}`;
   });
 
+  const searchParams = useSearchParams();
+  const date = searchParams.get("date");
+  const view = searchParams.get("view");
+  const memberId = searchParams.get("member_id");
+
+  const { data, isLoading, error } = useQuery({
+    queryKey: ["calendar", date, view, memberId],
+    queryFn: () => getCalendar({ date, view, memberId }),
+    enabled: !!date && !!view && !!memberId,
+  });
+
+  if (isLoading) return <p>Is Loading...</p>;
+
+  console.log(data);
+
   return (
-    <div className="w-full overflow-y-scroll h-full">
-      <table className="w-full border-collapse">
-        <tbody>
-          {slots.map((slot, i) => (
-            <tr
-              key={i}
-              className="group border-b border-border last:border-0"
-              style={{
-                borderBottomWidth: slot.isHour ? "2px" : "0.5px",
-              }}
-            >
-              <td className="w-16 px-2 py-0 text-xs text-muted-foreground border-r-2 border-border align-middle h-6">
-                {slot.isHour ? (
-                  slot.time
-                ) : (
-                  <span className="opacity-0 group-hover:opacity-100 transition-opacity">
-                    {slot.time}
+    <div className="flex-1 overflow-y-auto min-h-0  ">
+      <div className="flex h-540">
+        <div className="h-full  px-1.5">
+          {hours.map((hour, index) => {
+            return (
+              <div key={index} className="h-22.5">
+                <p className="pt-[2px] font-medium text-[13px]">{hour}</p>
+              </div>
+            );
+          })}
+        </div>
+        <div className="h-full flex-1 [&>*:nth-child(4n+1)]:border-t-border ">
+          {slots.map((slot, index) => {
+            return (
+              <div
+                key={index}
+                className="h-[22.5px] border-x border-t border-t-border/40 flex items-center justify-center group p-px bg-muted bg-[repeating-linear-gradient(45deg,var(--color-border)_0px,var(--color-border)_0.6px,transparent_0.5px,transparent_6px)]"
+              >
+                <Button className="w-full h-full   bg-[color-mix(in_srgb,var(--primary)_10%,var(--background))] border-border rounded-[4px] opacity-0 group-hover:opacity-100 transition-opacity ">
+                  <span className="text-start w-full text-[13px] font-normal text-primary">
+                    {slot}
                   </span>
-                )}
-              </td>
-              <td className="h-6 cursor-pointer hover:bg-accent transition-colors" />
-            </tr>
-          ))}
-        </tbody>
-      </table>
+                </Button>
+              </div>
+            );
+          })}
+        </div>
+      </div>
     </div>
   );
 }

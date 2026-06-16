@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { JetBrains_Mono } from "next/font/google";
-import "./globals.css";
 import { cn } from "@/lib/utils";
+import "@/app/globals.css";
 import { Toaster } from "sonner";
 import { TanStackProvider } from "@/common/providers/tan-stack-provider";
 import { AuthInitializer } from "@/common/components/auth-initializer";

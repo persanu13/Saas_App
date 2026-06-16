@@ -20,7 +20,7 @@ export default function CustomerAuthPage() {
         title="Trimly for customers"
         description="Create an account or log in to book and manage your appointments."
       />
-      <SocialButtons buttons={socialsButtons} />
+      <SocialButtons buttons={socialsButtons} userType="CUSTOMER" />
       <TextSeparator text="OR" />
       <EmailForm userType="CUSTOMER" />
 
@@ -32,7 +32,7 @@ export default function CustomerAuthPage() {
           className="w-full"
           nativeButton={false}
           variant="link"
-          render={<Link href="/auth" />}
+          render={<Link href="/auth/professional" />}
         >
           Sign in as a professional
         </Button>

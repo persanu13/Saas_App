@@ -20,6 +20,12 @@ export function DatePicker({ value, onChange }: DatePickerProps) {
   const [open, setOpen] = React.useState(false);
   const [date, setDate] = React.useState<Date>(value ?? new Date());
 
+  React.useEffect(() => {
+    if (value) {
+      setDate(value);
+    }
+  }, [value]);
+
   return (
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger

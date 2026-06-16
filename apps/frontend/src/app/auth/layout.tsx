@@ -7,6 +7,8 @@ import { HugeiconsIcon } from "@hugeicons/react";
 import Image from "next/image";
 import { ArrowLeft02Icon } from "@hugeicons/core-free-icons";
 import { AuthProvider } from "@/common/contexts/auth-context";
+import { useAuthStore } from "@/common/stores/auth.store";
+import { useEffect } from "react";
 
 export default function AuthLayout({
   children,
@@ -14,6 +16,19 @@ export default function AuthLayout({
   children: React.ReactNode;
 }) {
   const router = useRouter();
+  const { user } = useAuthStore();
+
+  useEffect(() => {
+    if (user) {
+      if (user.type == "PROFESSIONAL") {
+        router.push("/professional");
+      } else {
+        router.push("/");
+      }
+    }
+  }, [user, router]);
+
+  if (user) return null;
 
   return (
     <AuthProvider>

@@ -5,6 +5,7 @@ import { ConfigService } from '@nestjs/config';
 import { UserType } from 'generated/prisma/enums';
 import { Request } from 'express';
 import { GoogleService } from './google.service';
+import { JwtPayload } from '../interfaces/payload';
 
 @Injectable()
 export class GoogleStrategy extends PassportStrategy(Strategy, 'google') {
@@ -26,9 +27,8 @@ export class GoogleStrategy extends PassportStrategy(Strategy, 'google') {
     accessToken: string,
     refreshToken: string,
     profile: any,
-  ): Promise<any> {
+  ): Promise<JwtPayload> {
     const { id, emails, displayName, photos } = profile;
-    console.log(req.query.state);
     const type = req.query.state as UserType;
 
     const user = await this.googleService.validateGoogleUser({

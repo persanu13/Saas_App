@@ -1,6 +1,11 @@
+import { UserType } from "@/lib/schemas/auth";
 import { create } from "zustand";
 
-export interface UserPayload {}
+export interface UserPayload {
+  sub: number;
+  email: string;
+  type: UserType;
+}
 
 interface AuthStore {
   accessToken: string | null;

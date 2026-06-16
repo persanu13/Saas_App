@@ -8,6 +8,10 @@ import { MailModule } from './mail/mail.module';
 import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
 import { APP_GUARD } from '@nestjs/core';
 import { CustomThrottlerGuard } from './common/guards/throttler.guard';
+import { OrganizationsModule } from './organizations/organizations.module';
+import { ScheduleModule } from './schedule/schedule.module';
+import { ServicesModule } from './services/services.module';
+import { AppointmentsModule } from './appointments/appointments.module';
 
 @Module({
   imports: [
@@ -38,6 +42,10 @@ import { CustomThrottlerGuard } from './common/guards/throttler.guard';
     UsersModule,
     AuthModule,
     MailModule,
+    OrganizationsModule,
+    ScheduleModule,
+    ServicesModule,
+    AppointmentsModule,
   ],
   providers: [
     {

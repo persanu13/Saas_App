@@ -18,6 +18,10 @@ export class AllExceptionsFilter implements ExceptionFilter {
     const response = ctx.getResponse<Response>();
     const request = ctx.getRequest<Request>();
 
+    if (response.headersSent) {
+      return;
+    }
+
     const { status, details } = this.getErrorResponse(exception);
 
     if (status >= HttpStatus.INTERNAL_SERVER_ERROR) {
@@ -49,7 +53,6 @@ export class AllExceptionsFilter implements ExceptionFilter {
       // P1001 = can't reach DB, P1002 = timeout, P1008 = timeout ops,
       // P1017 = server closed connection
       if (prismaError.code.startsWith('P1')) {
-        // <-- era 'P100', trebuie 'P1'
         return true;
       }
     }
