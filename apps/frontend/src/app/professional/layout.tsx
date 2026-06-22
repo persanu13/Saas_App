@@ -1,6 +1,7 @@
 "use client";
+
 import { Navbar } from "@/components/professional/navbar";
-import { Fragment, useEffect } from "react";
+import { useEffect } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { useAuthStore } from "@/common/stores/auth.store";
 import { useQuery } from "@tanstack/react-query";
@@ -21,26 +22,48 @@ export default function ProfessionalLayout({
     enabled: !!user && user.type === "PROFESSIONAL",
   });
 
+  const members = data?.data?.organizations;
   useEffect(() => {
+    if (user === undefined) return;
+
     if (!user || user.type !== "PROFESSIONAL") {
-      router.push("/auth");
+      router.replace("/auth");
     }
   }, [user, router]);
 
   useEffect(() => {
     if (
-      data?.data.organizations.length === 0 &&
-      !pathname.includes("/professional/account-type")
+      members &&
+      members.length === 0 &&
+      !pathname.startsWith("/professional/account-type")
     ) {
-      router.push("/professional/account-type");
+      router.replace("/professional/account-type");
     }
-  }, [data]);
+  }, [members, pathname, router]);
 
-  if (!user || user.type !== "PROFESSIONAL") return null;
+  if (!user) {
+    return <p>Loading...</p>;
+  }
+
+  if (user.type !== "PROFESSIONAL") {
+    return <p>Redirecting...</p>;
+  }
+
+  if (isLoading) {
+    return <p>Loading...</p>;
+  }
+
+  if (
+    members &&
+    members.length === 0 &&
+    !pathname.startsWith("/professional/account-type")
+  ) {
+    return <p>Redirecting...</p>;
+  }
 
   return (
     <div className="flex flex-col h-screen">
-      <Navbar />
+      <Navbar members={members!} />
       {children}
     </div>
   );

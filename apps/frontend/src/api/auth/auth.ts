@@ -1,12 +1,12 @@
 import { api } from "@/lib/axios";
-import { emailSchema, loginSchema } from "@/lib/schemas/auth";
+import { emailTypeSchema, loginSchema } from "@/lib/schemas/auth";
 import z from "zod";
 
 type EmailData = {
   exists: boolean;
 };
 
-export async function emailCall(formData: z.infer<typeof emailSchema>) {
+export async function emailCall(formData: z.infer<typeof emailTypeSchema>) {
   const path: string = "/auth/email";
   const data = {
     email: formData.email,

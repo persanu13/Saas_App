@@ -1,5 +1,9 @@
 import { z } from "zod";
 
+export const emailSchema = z.object({
+  email: z.string().min(1, "Email is required").email("Email format invalid"),
+});
+
 export const organizationSchema = z.object({
   name: z.string().min(1, "Name is required"),
   slug: z

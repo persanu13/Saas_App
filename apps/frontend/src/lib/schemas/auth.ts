@@ -3,7 +3,7 @@ import { isValidPhoneNumber } from "libphonenumber-js";
 
 export type UserType = "CUSTOMER" | "PROFESSIONAL";
 
-export const emailSchema = z.object({
+export const emailTypeSchema = z.object({
   email: z.string().min(1, "Email is required").email("Email format invalid"),
   type: z.enum(["CUSTOMER", "PROFESSIONAL"]),
 });
@@ -35,6 +35,7 @@ export const registerSchema = z
       ),
 
     confirmPassword: z.string().min(1, "Confirm password is required"),
+    emailVerified: z.boolean(),
     acceptEmails: z.boolean().refine((val) => val === true, {
       message: "You must accept to receive emails",
     }),

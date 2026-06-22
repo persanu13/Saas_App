@@ -12,7 +12,7 @@ import { Button } from "../ui/button";
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Controller, useForm } from "react-hook-form";
-import { emailSchema, UserType } from "@/lib/schemas/auth";
+import { emailTypeSchema, UserType } from "@/lib/schemas/auth";
 import z from "zod";
 import { useAuth } from "@/common/contexts/auth-context";
 import { useRouter } from "next/navigation";
@@ -27,8 +27,8 @@ export function EmailForm({ userType }: { userType: UserType }) {
 
   const { setEmail } = useAuth();
 
-  const form = useForm<z.infer<typeof emailSchema>>({
-    resolver: zodResolver(emailSchema),
+  const form = useForm<z.infer<typeof emailTypeSchema>>({
+    resolver: zodResolver(emailTypeSchema),
     defaultValues: {
       email: "",
       type: userType,
@@ -39,7 +39,6 @@ export function EmailForm({ userType }: { userType: UserType }) {
   const { mutate, isPending } = useMutation({
     mutationFn: emailCall,
     onSuccess: (res) => {
-      console.log(1);
       setEmail(form.getValues("email"));
       if (!res.data.exists) {
         router.push(`/auth/${userType.toLowerCase()}/register`);
@@ -48,7 +47,6 @@ export function EmailForm({ userType }: { userType: UserType }) {
       }
     },
     onError: (err: ApiError) => {
-      console.log(err);
       if (err.statusCode === 401) {
         setEmail(form.getValues("email"));
         router.push("/auth/email-verification");

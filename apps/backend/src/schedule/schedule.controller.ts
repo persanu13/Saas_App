@@ -40,4 +40,17 @@ export class ScheduleController {
   ) {
     return await this.scheduleService.getCalendar(organization.id, query);
   }
+
+  @UseGuards(OrganizationContextGuard)
+  @Post()
+  @Roles(UserType.PROFESSIONAL)
+  async createSchedule(
+    @CurrentOrganization() organization: Organization,
+    @Body() createScheduleDto: CreateScheduleDto,
+  ) {
+    return await this.scheduleService.createSchedule(
+      organization.id,
+      createScheduleDto,
+    );
+  }
 }

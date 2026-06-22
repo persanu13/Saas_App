@@ -36,7 +36,7 @@ export default function EmailVerificationPage() {
   useEffect(() => {
     if (isSuccess) {
       toast.success("Email verified successfully!");
-      router.push("/auth/customer/login");
+      router.push("/auth");
     }
     if (isError) {
       toast.error("Invalid or expired token.");

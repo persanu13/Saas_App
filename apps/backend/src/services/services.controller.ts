@@ -9,6 +9,9 @@ import {
   BadRequestException,
   UseGuards,
   ForbiddenException,
+  Query,
+  ParseIntPipe,
+  Put,
 } from '@nestjs/common';
 import { ServicesService } from './services.service';
 import { CreateServiceDto } from './dto/create-service.dto';
@@ -52,23 +55,26 @@ export class ServicesController {
     return this.servicesService.create(organization.id, createServiceDto);
   }
 
-  @Get()
-  findAll() {
-    return this.servicesService.findAll();
+  @Roles(UserType.PROFESSIONAL)
+  @Get('member-services')
+  async getAllServicesByMemberId(
+    @Query('memberId', ParseIntPipe) memberId: number,
+  ) {
+    return await this.servicesService.getServicesByMemberId(memberId);
   }
 
-  @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.servicesService.findOne(+id);
-  }
-
-  @Patch(':id')
-  update(@Param('id') id: string, @Body() updateServiceDto: UpdateServiceDto) {
-    return this.servicesService.update(+id, updateServiceDto);
-  }
-
+  @Roles(UserType.PROFESSIONAL)
   @Delete(':id')
-  remove(@Param('id') id: string) {
-    return this.servicesService.remove(+id);
+  async remove(@Param('id', ParseIntPipe) id: number) {
+    return await this.servicesService.remove(+id);
+  }
+
+  @Roles(UserType.PROFESSIONAL)
+  @Patch(':id')
+  async update(
+    @Param('id', ParseIntPipe) id: number,
+    @Body() updateServiceDto: UpdateServiceDto,
+  ) {
+    return await this.servicesService.update(+id, updateServiceDto);
   }
 }

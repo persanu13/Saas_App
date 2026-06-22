@@ -4,6 +4,8 @@ import { OrganizationsService } from 'src/organizations/organizations.service';
 import { DayOfWeek } from 'generated/prisma/enums';
 import { getMondayOfWeek } from 'src/common/utility';
 import { GetCalendarDto } from './dto/get-calendar.dto';
+import { DEFAULT_SCHEDULE_SLOTS } from 'src/organizations/organizations.constants';
+import { CreateScheduleDto } from './dto/create-schedule.dto';
 
 @Injectable()
 export class ScheduleService {
@@ -55,6 +57,14 @@ export class ScheduleService {
         query.view == 'DAY'
           ? await this.getDaySlots(query.memberId, query.date)
           : await this.getWeekSlots(query.memberId, query.date),
+      appoinments: await this.prisma.appointment.findMany({
+        where: { memberId: query.memberId, date: query.date, isActive: true },
+        include: {
+          client: true,
+          bookedBy: true,
+          services: { include: { service: true } },
+        },
+      }),
     };
   }
 
@@ -84,39 +94,45 @@ export class ScheduleService {
       'SUNDAY',
     ];
 
-    const result: Record<
-      string,
-      {
-        date: Date;
-        slots: { day: DayOfWeek; startMin: number; endMin: number }[];
-      }
-    > = {};
+    type SlotWithDate = {
+      id: number;
+      scheduleId: number;
+      day: DayOfWeek;
+      startMin: number;
+      endMin: number;
+      date: Date;
+    };
+
+    const result: SlotWithDate[] = [];
 
     for (let i = 0; i < 7; i++) {
-      const date = new Date(weekStart);
-      date.setDate(date.getDate() + i);
+      const currentDate = new Date(weekStart);
+      currentDate.setDate(currentDate.getDate() + i);
 
       const day = days[i];
 
       const activeSchedule = schedules.find(
         (s) =>
-          s.validFrom <= date &&
-          (s.validUntil === null || s.validUntil >= date),
+          s.validFrom <= currentDate &&
+          (s.validUntil === null || s.validUntil >= currentDate),
       );
 
       const slots = (activeSchedule?.slots ?? [])
         .filter((slot) => slot.day === day)
         .sort((a, b) => a.startMin - b.startMin);
 
-      result[day] = { date, slots };
+      result.push(
+        ...slots.map((slot) => ({
+          ...slot,
+          date: new Date(currentDate),
+        })),
+      );
     }
+
     return result;
   }
 
   async getDaySlots(memberId: number, date: Date) {
-    const targetDate = new Date(date);
-    targetDate.setHours(0, 0, 0, 0);
-
     const days: DayOfWeek[] = [
       'SUNDAY',
       'MONDAY',
@@ -126,14 +142,15 @@ export class ScheduleService {
       'FRIDAY',
       'SATURDAY',
     ];
-    const day = days[targetDate.getDay()];
+
+    const day = days[date.getDay()];
 
     const schedule = await this.prisma.weeklySchedule.findFirst({
       where: {
         memberId,
         isActive: true,
-        validFrom: { lte: targetDate },
-        OR: [{ validUntil: null }, { validUntil: { gte: targetDate } }],
+        validFrom: { lte: date },
+        OR: [{ validUntil: null }, { validUntil: { gte: date } }],
       },
       orderBy: { createdAt: 'desc' },
       include: {
@@ -144,9 +161,48 @@ export class ScheduleService {
       },
     });
 
-    return {
-      date: targetDate,
-      slots: schedule?.slots ?? [],
-    };
+    return (schedule?.slots ?? []).map((slot) => ({
+      ...slot,
+      date: date,
+    }));
+  }
+
+  async createSchedule(
+    organizationId: number,
+    createScheduleDto: CreateScheduleDto,
+  ) {
+    console.log(createScheduleDto);
+    return await this.prisma.$transaction(async (tx) => {
+      const lastWeeklySchedule = await tx.weeklySchedule.findFirst({
+        where: {
+          memberId: createScheduleDto.memberId,
+          isActive: true,
+          validUntil: null,
+        },
+      });
+
+      if (lastWeeklySchedule && createScheduleDto.validUntil == null) {
+        const newValidUntil = new Date(createScheduleDto.validFrom);
+        newValidUntil.setDate(newValidUntil.getDate() - 1);
+
+        await tx.weeklySchedule.update({
+          where: { id: lastWeeklySchedule.id },
+          data: {
+            validUntil: newValidUntil,
+          },
+        });
+      }
+
+      return await tx.weeklySchedule.create({
+        data: {
+          memberId: createScheduleDto.memberId,
+          validFrom: createScheduleDto.validFrom,
+          validUntil: createScheduleDto.validUntil,
+          slots: {
+            create: createScheduleDto.slots,
+          },
+        },
+      });
+    });
   }
 }

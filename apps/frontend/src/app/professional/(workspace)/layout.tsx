@@ -17,7 +17,9 @@ export default function WorkspaceLayout({
       }
     >
       <AppSidebar />
-      <main className="flex flex-col w-full flex-1">{children}</main>
+      <main className="flex flex-col w-full flex-1  items-center ">
+        {children}
+      </main>
     </SidebarProvider>
   );
 }

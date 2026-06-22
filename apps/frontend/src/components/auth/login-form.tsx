@@ -15,17 +15,20 @@ import { Controller, useForm } from "react-hook-form";
 import { loginSchema, UserType } from "@/lib/schemas/auth";
 import z from "zod";
 import { useAuth } from "@/common/contexts/auth-context";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { toast } from "sonner";
 
 import { useMutation } from "@tanstack/react-query";
 import { ApiError } from "@/lib/axios";
 import { loginCall } from "@/api/auth/auth";
 import { useAuthStore } from "@/common/stores/auth.store";
+import { useEffect } from "react";
 
 export function LoginForm({ userType }: { userType: UserType }) {
   const router = useRouter();
   const { email } = useAuth();
+  const searchParams = useSearchParams();
+  const redirect = searchParams.get("redirect");
 
   const form = useForm<z.infer<typeof loginSchema>>({
     resolver: zodResolver(loginSchema),
@@ -41,8 +44,12 @@ export function LoginForm({ userType }: { userType: UserType }) {
     mutationFn: loginCall,
     onSuccess: (res) => {
       useAuthStore.getState().setAuth(res.data.access_token, res.data.user);
-      if (userType == "PROFESSIONAL") {
-        router.push("/professional/calendar");
+      if (userType === "PROFESSIONAL") {
+        if (redirect) {
+          router.push(redirect);
+        } else {
+          router.push("/professional/calendar");
+        }
       } else {
         router.push("/");
       }
@@ -51,6 +58,10 @@ export function LoginForm({ userType }: { userType: UserType }) {
       toast.error(err.details.message);
     },
   });
+
+  useEffect(() => {
+    form.setValue("email", email);
+  }, [email, form]);
 
   return (
     <form

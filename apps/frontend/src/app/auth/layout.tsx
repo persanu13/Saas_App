@@ -26,7 +26,7 @@ export default function AuthLayout({
         router.push("/");
       }
     }
-  }, [user, router]);
+  }, []);
 
   if (user) return null;
 

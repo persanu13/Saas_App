@@ -10,7 +10,6 @@ import { UsersService } from 'src/users/users.service';
 import { VerificationTokenService } from '../verification-token.service';
 import { MailService } from 'src/mail/mail.service';
 import { ConfigService } from '@nestjs/config';
-import { AccountService } from '../account/account.service';
 import * as bcrypt from 'bcrypt';
 import * as crypto from 'crypto';
 import { RegisterProfessionalDto } from './dto/register-professional.dto';
@@ -87,6 +86,7 @@ export class RegistrationService {
       'PROFESSIONAL',
       registerDto.phone,
       hashPassword,
+      registerDto.emailVerified,
     );
     // Send verification email
     this.sendVerificationEmail(registerDto.email, 'PROFESSIONAL');

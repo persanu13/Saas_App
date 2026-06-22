@@ -31,11 +31,6 @@ import { usePathname } from "next/navigation";
 
 const items = [
   {
-    title: "Home",
-    url: "/dashboard",
-    icon: Home01Icon,
-  },
-  {
     title: "Calendar",
     url: "/calendar",
     icon: Calendar04Icon,

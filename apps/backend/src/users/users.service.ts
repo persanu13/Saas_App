@@ -14,6 +14,7 @@ export class UsersService {
     type: UserType,
     phone?: string,
     hashPassword?: string,
+    emailVerified?: boolean,
     image?: string,
   ) {
     return await this.prisma.user.create({
@@ -24,6 +25,7 @@ export class UsersService {
         type,
         hashPassword,
         image,
+        emailVerified: emailVerified ? new Date() : null,
       },
       select: {
         id: true,

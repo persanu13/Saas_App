@@ -29,11 +29,12 @@ export default function SelectMember() {
 
   const members = data?.data ?? [];
   const currentMember = members.find((m: any) => m.id === Number(memberId));
+
   useEffect(() => {
     if (!isLoading && members.length > 0 && !currentMember) {
       const params = new URLSearchParams(searchParams.toString());
       const meMember = members.find((m: any) => m.userId == user?.sub);
-      params.set("member_id", String(meMember.id));
+      params.set("member_id", String(meMember?.id));
       router.replace(`${pathname}?${params.toString()}`);
     }
   }, [isLoading, members, currentMember, router, pathname, searchParams]);
@@ -78,7 +79,15 @@ export default function SelectMember() {
             );
           }
           return (
-            <Button variant="ghost" key={member.id}>
+            <Button
+              variant="ghost"
+              key={member.id}
+              onClick={() => {
+                const params = new URLSearchParams(searchParams.toString());
+                params.set("member_id", String(member.id));
+                router.replace(`${pathname}?${params.toString()}`);
+              }}
+            >
               {member?.name}
             </Button>
           );

@@ -1,14 +1,15 @@
-import {
-  IsString,
-  IsNotEmpty,
-  IsEmail,
-  MinLength,
-  MaxLength,
-  IsStrongPassword,
-  Matches,
-  IsPhoneNumber,
-} from 'class-validator';
 import { Transform } from 'class-transformer';
+import {
+  IsBoolean,
+  IsEmail,
+  IsNotEmpty,
+  IsOptional,
+  IsPhoneNumber,
+  IsString,
+  IsStrongPassword,
+  MaxLength,
+  MinLength,
+} from 'class-validator';
 
 export class RegisterProfessionalDto {
   @IsString()
@@ -27,4 +28,8 @@ export class RegisterProfessionalDto {
 
   @IsStrongPassword()
   password!: string;
+
+  @IsOptional()
+  @IsBoolean()
+  emailVerified?: boolean;
 }

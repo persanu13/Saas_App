@@ -27,7 +27,7 @@ export default function RootLayout({
         <TanStackProvider>
           <AuthInitializer>{children}</AuthInitializer>
         </TanStackProvider>
-        <Toaster position="top-right" />
+        <Toaster position="top-center" />
       </body>
     </html>
   );

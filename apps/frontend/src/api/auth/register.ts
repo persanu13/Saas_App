@@ -1,5 +1,5 @@
 import { api } from "@/lib/axios";
-import { emailSchema, registerSchema } from "@/lib/schemas/auth";
+import { emailTypeSchema, registerSchema } from "@/lib/schemas/auth";
 import z from "zod";
 
 export async function registerCustomerCall(
@@ -24,6 +24,7 @@ export async function registerProfessionalCall(
     email: formData.email,
     phone: `${formData.phonePrefix}${formData.phoneNumber}`,
     password: formData.password,
+    emailVerified: formData.emailVerified,
   };
   return api.post<any>(path, data);
 }

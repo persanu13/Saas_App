@@ -6,12 +6,17 @@ import {
   Patch,
   Param,
   Delete,
+  ParseIntPipe,
 } from '@nestjs/common';
 import { AppointmentsService } from './appointments.service';
 import { CreateAppointmentDto } from './dto/create-appointment.dto';
 import { UpdateAppointmentDto } from './dto/update-appointment.dto';
 import { CurrentUser } from 'src/common/decorators/current-user.decorator';
 import type { JwtPayload } from 'src/auth/interfaces/payload';
+import { Public } from 'src/auth/decorators/public.decorator';
+import { CreateAppointmentFromAvailabilityDto } from './dto/create-appointment-from-availability.dto';
+import { Roles } from 'src/auth/decorators/roles.decorator';
+import { UserType } from 'generated/prisma/client';
 
 @Controller('appointments')
 export class AppointmentsController {
@@ -47,7 +52,16 @@ export class AppointmentsController {
   }
 
   @Delete(':id')
-  remove(@Param('id') id: string) {
+  remove(@Param('id', ParseIntPipe) id: number) {
     return this.appointmentsService.remove(+id);
+  }
+
+  @Post('book')
+  @Roles(UserType.PROFESSIONAL, UserType.CUSTOMER)
+  createFromAvailability(
+    @CurrentUser() user: JwtPayload,
+    @Body() dto: CreateAppointmentFromAvailabilityDto,
+  ) {
+    return this.appointmentsService.createFromAvailability(dto, user.sub);
   }
 }
